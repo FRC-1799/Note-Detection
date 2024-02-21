@@ -9,7 +9,7 @@ import time
 
 start = time.time()
 # define the image url to use for inference
-video = cv2.VideoCapture(2)
+video = cv2.VideoCapture(1)
 
 # load a pre-trained yolov8n model
 model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
@@ -18,7 +18,7 @@ while True:
     i+=1
     succses, img = video.read()
     #imgJpg = cv2.imwrite("frame%d.jpg" % i, img)
-    jpgImage = cv2.imencode('.jpg', img)[i].tostring()
+    jpgImage = cv2.imencode('.jpg', img)[1].tobytes()
     results = model.infer(jpgImage)
      
     # take images, put them into a folder, then delete them when done
@@ -36,15 +36,20 @@ while True:
     #     scene=imgJpg, detections=detections)
     # annotated_image = label_annotator.annotate(
     #     scene=annotated_image, detections=detections)
-    print(detections['class_name'])
+
+
+
     try:
         for item in detections['class_name']:
             if item == 'note':
-                print("True")
-            
+                centerXPoint = (detections.xyxy[0][2] - detections.xyxy[0][0]) + detections.xyxy[0][0]
+                centerYPoint = (detections.xyxy[0][3] - detections.xyxy[0][1]) + detections.xyxy[0][1]
+                centerPoint = (centerXPoint, centerYPoint)
+
+                print(detections.xyxy[0][2] - detections.xyxy[0][0])
     except:
         pass
 
-    os.remove(f"frame{i}.jpg")
+    #os.remove(f"frame{i}.jpg")
 
 
