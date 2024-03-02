@@ -6,7 +6,7 @@ from poseEstimate import NotePoseEstimator
 
 start = time.time()
 # define the image url to use for inference
-video = cv2.VideoCapture(1)
+video = cv2.VideoCapture(0)
 
 # load a pre-trained yolov8n model
 model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
@@ -30,12 +30,7 @@ note_estimator.horizontal_pixels = 640
 # Returns the detection of a note
 def returnNote(imgNum):
     
-    success, imgNum = video.read()
-    jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
-    results = model.infer(jpgImage)
     
-
-    detections = sv.Detections.from_inference(results[0].dict(by_alias=True, exclude_none=True))
 
     return detections
 
@@ -59,7 +54,18 @@ def addCenterPoints(detections):
 while True:
     imageNumber += 1
 
-    detections = returnNote(imageNumber)
+    #detections = returnNote(imageNumber)
+
+    success, imgNum = video.read()
+    if success:
+        cv2.imshow("yup", imgNum)
+    jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
+    results = model.infer(jpgImage)
+
+    
+    
+
+    detections = sv.Detections.from_inference(results[0].dict(by_alias=True, exclude_none=True))
     addCenterPoints(detections)
 
     
