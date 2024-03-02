@@ -64,9 +64,12 @@ class NotePoseEstimator:
         x_distance = y_dist_hyp * math.tan(x_pixels * self._horiz_angle_per_pixel - (self.__horiz_fov_angle_rad/2))
         return (x_distance, y_distance)
     
-    def get_camera_ray_to_ground(y_pixels:int):
+    def get_camera_ray_to_ground(self, y_pixels):
         distance = math.sqrt(camera_mount_height**2 + get_y_distance_from_pixels(y_pixels)**2)
         return distance
+    
+    def get_x_y_distance_from_pixels(self,x_pixels:int, y_pixels:int):
+        return get_x_distance_from_pixels(x_pixels,y_pixels), get_y_distance_from_pixels(y_pixels)
     
     @property
     def camera_mount_height(self):
