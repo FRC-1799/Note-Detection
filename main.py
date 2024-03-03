@@ -22,21 +22,25 @@ note_estimator.vertical_fov_angle = 27.0
 note_estimator.vertical_pixels = 480
 note_estimator.horizontal_fov_angle = 39.6
 note_estimator.horizontal_pixels = 640
-
-# Annotates the note image, not needed
-#def boxAnnotator(detection, img):
-    
     
 # Returns the detection of a note
 def returnNote(imgNum):
-    
-    
+    success, imgNum = video.read()
+    if success:
+        jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
+        results = model.infer(jpgImage)
 
-    return detections
+        detections = sv.Detections.from_inference(results[0].dict(by_alias=True, exclude_none=True))
+        return detections
+    else:
+        return "Frame Not Captured!"
 
 # Checks if there is a note
 def isNote(detections):
-    return detections['class_name'] != None
+    try:
+        return detections['class_name'] != None
+    except:
+        return True
 
 # Adds the center points of the note(s) to the list
 def addCenterPoints(detections):
@@ -49,36 +53,21 @@ def addCenterPoints(detections):
 
             noteCenterXandY.append((centerXPoint, centerYPoint))
 
+# Main functionality of the program
+def noteInCamera(detections):
+    if detections == "Frame Not Captured!":
+        print(detections)
+    else:
+        addCenterPoints(detections)
+        
+        # Gets (x,y) position of the note based on the camera
+        if isNote(detections):
+            for note in noteCenterXandY:
+                print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
 
 
 while True:
     imageNumber += 1
 
-    #detections = returnNote(imageNumber)
-
-    success, imgNum = video.read()
-    if success:
-        cv2.imshow("yup", imgNum)
-    jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
-    results = model.infer(jpgImage)
-
-    
-    
-
-    detections = sv.Detections.from_inference(results[0].dict(by_alias=True, exclude_none=True))
-    addCenterPoints(detections)
-
-    
-    #return annotated_image
-    
-    # Gets distance on ground from note (will change based on usage)
-    if isNote(detections):
-        for note in noteCenterXandY:
-            print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
-            
-            
-    
-            
-
-    
-
+    detections = returnNote(imageNumber)
+    noteInCamera(detections)
