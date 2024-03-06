@@ -55,15 +55,12 @@ def add_center_points(detections):
 
 # Main functionality of the program
 def note_in_camera(detections):
-    if detections == "Frame Not Captured!":
-        print(detections)
-    else:
-        add_center_points(detections)
-        
-        # Gets (x,y) position of the note based on the camera
-        if is_note(detections):
-            for note in noteCenterXandY:
-                print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
+    add_center_points(detections)
+    
+    # Gets (x,y) position of the note based on the camera
+    if is_note(detections):
+        for note in noteCenterXandY:
+            print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
 
 
 while True:
