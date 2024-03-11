@@ -65,18 +65,11 @@ def note_in_camera(detections):
 
 #expects the note offset where X is the forward distance and the robot position on the feild
 # returns a list of the note posit on the feild
-def toRobotPosit(noteX, noteY, robotX, robotY, roboRotation):
-    xMultiplier=1
-    yMultiplier=1
-    if abs(roboRotation)>90:
-        xMultiplier=-1
+def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
+    noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
+    noteDisance=math.sqrt(noteX**2+noteY**2)
+    return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
 
-    if roboRotation<0:
-        yMultiplier=-1
-
-    noteRotation={math.sin(), robotY}
-
-    
 
 while True:
     imageNumber += 1

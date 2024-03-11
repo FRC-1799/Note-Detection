@@ -1,17 +1,11 @@
 import math
 
 
-def toRobotPosit(noteX, noteY, robotX, robotY, roboRotation):
-    roboRotation=math.radians(roboRotation)
-
-    noteRotation=[(math.cos(roboRotation)+math.sin(roboRotation))*noteX+robotX, (math.cos(roboRotation)-math.sin(roboRotation))*noteY+robotY]
-
-    
-
-    return noteRotation
+def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
+    noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
+    noteDisance=math.sqrt(noteX**2+noteY**2)
+    return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
 
 
 
 
-
-print(toRobotPosit(1, 1, 0, 0, 60))
