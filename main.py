@@ -1,5 +1,6 @@
 from inference import get_roboflow_model
 import supervision as sv
+import math
 import cv2
 import time
 from poseEstimate import NotePoseEstimator
@@ -62,6 +63,20 @@ def note_in_camera(detections):
         for note in noteCenterXandY:
             print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
 
+#expects the note offset where X is the forward distance and the robot position on the feild
+# returns a list of the note posit on the feild
+def toRobotPosit(noteX, noteY, robotX, robotY, roboRotation):
+    xMultiplier=1
+    yMultiplier=1
+    if abs(roboRotation)>90:
+        xMultiplier=-1
+
+    if roboRotation<0:
+        yMultiplier=-1
+
+    noteRotation={math.sin(), robotY}
+
+    
 
 while True:
     imageNumber += 1
