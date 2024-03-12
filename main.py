@@ -1,5 +1,6 @@
 from inference import get_roboflow_model
 import supervision as sv
+import math
 import cv2
 import time
 from poseEstimate import NotePoseEstimator
@@ -55,15 +56,19 @@ def add_center_points(detections):
 
 # Main functionality of the program
 def note_in_camera(detections):
-    if detections == "Frame Not Captured!":
-        print(detections)
-    else:
-        add_center_points(detections)
-        
-        # Gets (x,y) position of the note based on the camera
-        if is_note(detections):
-            for note in noteCenterXandY:
-                print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
+    add_center_points(detections)
+    
+    # Gets (x,y) position of the note based on the camera
+    if is_note(detections):
+        for note in noteCenterXandY:
+            print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
+
+#expects the note offset where X is the forward distance and the robot position on the feild
+# returns a list of the note posit on the feild
+def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
+    noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
+    noteDisance=math.sqrt(noteX**2+noteY**2)
+    return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
 
 
 while True:
