@@ -28,7 +28,7 @@ note_estimator.horizontal_pixels = 640
 def return_note(imgNum):
     success, imgNum = video.read()
     if success:
-        print("Looking at frame")
+
         jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
         results = model.infer(jpgImage)
 
@@ -40,7 +40,7 @@ def return_note(imgNum):
 # Checks if there is a note
 def is_note(detections):
     try:
-        return detections['class_name'] != None
+        return detections['class_name'].size > 0
     except:
         return True
 
@@ -58,7 +58,7 @@ def add_center_points(detections):
 # Main functionality of the program
 def note_in_camera(detections):
     add_center_points(detections)
-    print("Checking for note location...")
+
     # Gets (x,y) position of the note based on the camera
     if is_note(detections):
         for note in noteCenterXandY:
