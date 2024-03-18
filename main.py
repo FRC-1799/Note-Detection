@@ -4,6 +4,11 @@ import math
 import cv2
 import time
 from poseEstimate import NotePoseEstimator
+from networktables import NetworkTables
+
+# As a client to connect to a robot
+NetworkTables.initialize(server='127.0.0.1')
+noteTopic = NetworkTables.getTable('SmartDashboard')
 
 start = time.time()
 # define the image url to use for inference
@@ -11,6 +16,7 @@ video = cv2.VideoCapture(0)
 
 # load a pre-trained yolov8n model
 model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+
 imageNumber = 0
 
 noteCenterXandY = []
@@ -63,9 +69,10 @@ def note_in_camera(detections):
     if is_note(detections):
         for note in noteCenterXandY:
             print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
+            noteTopic.putNumberArray("note", note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
 
-#expects the note offset where X is the forward distance and the robot position on the feild
-# returns a list of the note posit on the feild
+#expects the note offset where X is the forward distance and the robot position on the field
+# returns a list of the note posit on the field
 def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
     noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
     noteDisance=math.sqrt(noteX**2+noteY**2)
