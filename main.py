@@ -73,14 +73,17 @@ def note_in_camera(detections):
 
 #expects the note offset where X is the forward distance and the robot position on the field
 # returns a list of the note posit on the field
-def toRobotPosit(noteX, noteY):
+def toRobotPosit(coordinates):
+    noteX = coordinates[1] #Assigns note-detection Y as X
+    noteY = coordinates[0] #Assigns note-detection X as Y
+
+    robotX = smartDashboard.getNumber("robotPositX", 1)
+    robotY = smartDashboard.getNumber("robotPositY", 1)
+    robotRotation = smartDashboard.getNumber("RobotRotation", 1)
+
     noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
     noteDisance=math.sqrt(noteX**2+noteY**2)
 
-    robotX = smartDashboard.getNumber("robotPositX")
-    robotY = smartDashboard.getNumber("robotPositY")
-    robotRotation = smartDashboard.getNumber("RobotRotation")
-    
     return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
 
 
