@@ -8,7 +8,7 @@ from networktables import NetworkTables
 
 # As a client to connect to a robot
 NetworkTables.initialize(server='127.0.0.1')
-noteTopic = NetworkTables.getTable('SmartDashboard')
+smartDashboard = NetworkTables.getTable('SmartDashboard')
 
 start = time.time()
 # define the image url to use for inference
@@ -69,13 +69,18 @@ def note_in_camera(detections):
     if is_note(detections):
         for note in noteCenterXandY:
             print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
-            noteTopic.putNumberArray("note", note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
+            smartDashboard.putNumberArray("notePosition", toRobotPosit(note_estimator.get_x_y_distance_from_pixels(note[0], note[1])))
 
 #expects the note offset where X is the forward distance and the robot position on the field
 # returns a list of the note posit on the field
-def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
+def toRobotPosit(noteX, noteY):
     noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
     noteDisance=math.sqrt(noteX**2+noteY**2)
+
+    robotX = smartDashboard.getNumber("robotPositX")
+    robotY = smartDashboard.getNumber("robotPositY")
+    robotRotation = smartDashboard.getNumber("RobotRotation")
+    
     return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
 
 
