@@ -5,9 +5,13 @@ import cv2
 import time
 from poseEstimate import NotePoseEstimator
 from networktables import NetworkTables
+import argparse
 
+parser = argparse.ArgumentParser(description='Note Detection')
+parser.add_argument('roboRioUrl')
+args = parser.parse_args()
 # As a client to connect to a robot
-NetworkTables.initialize(server='127.0.0.1')
+NetworkTables.initialize(server=args.roboRioUrl)
 smartDashboard = NetworkTables.getTable('SmartDashboard')
 
 start = time.time()
