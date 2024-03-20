@@ -4,16 +4,40 @@ import math
 import cv2
 import time
 from poseEstimate import NotePoseEstimator
+from networktables import NetworkTables
+import pickle
+import os
+
+# As a client to connect to a robot
+NetworkTables.initialize(server="10.17.99.2")
+smartDashboard = NetworkTables.getTable('SmartDashboard')
 
 start = time.time()
 # define the image url to use for inference
 video = cv2.VideoCapture(0)
 
 # load a pre-trained yolov8n model
-model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+# if not os.path.isfile('model')
+
+# try:
+#     with open('model', 'r') as existingFile:
+#         model = pickle.load(existingFile)
+# except:
+#     model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+#     with open('model', 'w') as newFile:
+#         pickle.dump(model, newFile)
+
+try:
+    with open('model', 'rb') as existingFile:
+        model = pickle.load(existingFile)
+except:
+    model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+    with open('model', 'wb') as newFile:
+        pickle.dumps(model, newFile)
+
 imageNumber = 0
 
-noteCenterXandY = []
+noteCenterXandYandConfidence = []
 
 note_estimator = NotePoseEstimator()
 note_estimator.camera_mount_height = 0.79
@@ -28,6 +52,7 @@ note_estimator.horizontal_pixels = 640
 def return_note(imgNum):
     success, imgNum = video.read()
     if success:
+
         jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
         results = model.infer(jpgImage)
 
@@ -39,35 +64,48 @@ def return_note(imgNum):
 # Checks if there is a note
 def is_note(detections):
     try:
-        return detections['class_name'] != None
+        return detections['class_name'].size > 0
     except:
         return True
 
 # Adds the center points of the note(s) to the list
 def add_center_points(detections):
-    global noteCenterXandY
+    global noteCenterXandYandConfidence
+    noteCenterXandYandConfidence = []
 
     if is_note(detections):
         for item in detections['class_name']:
             centerXPoint = (detections.xyxy[0][2] - detections.xyxy[0][0]) + detections.xyxy[0][0]
             centerYPoint = (detections.xyxy[0][3] - detections.xyxy[0][1]) + detections.xyxy[0][1]
 
-            noteCenterXandY.append((centerXPoint, centerYPoint))
+            noteCenterXandYandConfidence.append((centerXPoint, centerYPoint, detections.confidence))
 
 # Main functionality of the program
 def note_in_camera(detections):
     add_center_points(detections)
-    
+
     # Gets (x,y) position of the note based on the camera
     if is_note(detections):
-        for note in noteCenterXandY:
-            print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
+        targetNote = max(noteCenterXandYandConfidence, key=lambda x: x[2][0]) #gets the note info with highest first confidence (I don't know why there's more than one confidence but there is.)
+        print(str(note_estimator.get_x_y_distance_from_pixels(targetNote[0], targetNote[1])) + str(targetNote[2]))
+        smartDashboard.putNumberArray("notePosition", toRobotPosit(note_estimator.get_x_y_distance_from_pixels(targetNote[0], targetNote[1])))
+    else:
+        print([0, 0])
+        smartDashboard.putNumberArray("notePosition", [0, 0])
 
-#expects the note offset where X is the forward distance and the robot position on the feild
-# returns a list of the note posit on the feild
-def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
+#expects the note offset where X is the forward distance and the robot position on the field
+# returns a list of the note posit on the field
+def toRobotPosit(coordinates):
+    noteX = coordinates[1] #Assigns note-detection Y as X
+    noteY = coordinates[0] #Assigns note-detection X as Y
+
+    robotX = smartDashboard.getNumber("robotPositX", 1)
+    robotY = smartDashboard.getNumber("robotPositY", 1)
+    robotRotation = smartDashboard.getNumber("RobotRotation", 1)
+
     noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
     noteDisance=math.sqrt(noteX**2+noteY**2)
+
     return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
 
 

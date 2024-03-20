@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Waiting 3 seconds..."
+sleep 3
+export PYTHONUNBUFFERED=1
+exec ./main.py 127.0.0.1
