@@ -29,11 +29,11 @@ video = cv2.VideoCapture(0)
 
 try:
     with open('model', 'rb') as existingFile:
-        model = existingFile.read()
+        model = pickle.load(existingFile)
 except:
     model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
     with open('model', 'wb') as newFile:
-        newFile.write(model)
+        pickle.dumps(model, newFile)
 
 imageNumber = 0
 
