@@ -10,6 +10,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Note Detection')
 parser.add_argument('roboRioUrl')
 args = parser.parse_args()
+
 # As a client to connect to a robot
 NetworkTables.initialize(server=args.roboRioUrl)
 smartDashboard = NetworkTables.getTable('SmartDashboard')
@@ -23,7 +24,7 @@ model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3Ax
 
 imageNumber = 0
 
-noteCenterXandY = []
+noteCenterXandYandConfidence = []
 
 note_estimator = NotePoseEstimator()
 note_estimator.camera_mount_height = 0.79
@@ -56,14 +57,15 @@ def is_note(detections):
 
 # Adds the center points of the note(s) to the list
 def add_center_points(detections):
-    global noteCenterXandY
+    global noteCenterXandYandConfidence
+    noteCenterXandYandConfidence = []
 
     if is_note(detections):
         for item in detections['class_name']:
             centerXPoint = (detections.xyxy[0][2] - detections.xyxy[0][0]) + detections.xyxy[0][0]
             centerYPoint = (detections.xyxy[0][3] - detections.xyxy[0][1]) + detections.xyxy[0][1]
 
-            noteCenterXandY.append((centerXPoint, centerYPoint))
+            noteCenterXandYandConfidence.append((centerXPoint, centerYPoint, detections.confidence))
 
 # Main functionality of the program
 def note_in_camera(detections):
@@ -71,9 +73,12 @@ def note_in_camera(detections):
 
     # Gets (x,y) position of the note based on the camera
     if is_note(detections):
-        for note in noteCenterXandY:
-            print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
-            smartDashboard.putNumberArray("notePosition", toRobotPosit(note_estimator.get_x_y_distance_from_pixels(note[0], note[1])))
+        targetNote = max(noteCenterXandYandConfidence, key=lambda x: x[2][0]) #gets the note info with highest first confidence (I don't know why there's more than one confidence but there is.)
+        print(str(note_estimator.get_x_y_distance_from_pixels(targetNote[0], targetNote[1])) + str(targetNote[2]))
+        smartDashboard.putNumberArray("notePosition", toRobotPosit(note_estimator.get_x_y_distance_from_pixels(targetNote[0], targetNote[1])))
+    else:
+        print([0, 0])
+        smartDashboard.putNumberArray("notePosition", [0, 0])
 
 #expects the note offset where X is the forward distance and the robot position on the field
 # returns a list of the note posit on the field
