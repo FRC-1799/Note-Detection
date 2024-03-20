@@ -5,14 +5,11 @@ import cv2
 import time
 from poseEstimate import NotePoseEstimator
 from networktables import NetworkTables
-import argparse
-
-parser = argparse.ArgumentParser(description='Note Detection')
-parser.add_argument('roboRioUrl')
-args = parser.parse_args()
+import pickle
+import os
 
 # As a client to connect to a robot
-NetworkTables.initialize(server=args.roboRioUrl)
+NetworkTables.initialize(server="10.17.99.2")
 smartDashboard = NetworkTables.getTable('SmartDashboard')
 
 start = time.time()
@@ -20,7 +17,23 @@ start = time.time()
 video = cv2.VideoCapture(0)
 
 # load a pre-trained yolov8n model
-model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+# if not os.path.isfile('model')
+
+# try:
+#     with open('model', 'r') as existingFile:
+#         model = pickle.load(existingFile)
+# except:
+#     model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+#     with open('model', 'w') as newFile:
+#         pickle.dump(model, newFile)
+
+try:
+    with open('model', 'rb') as existingFile:
+        model = existingFile.read()
+except:
+    model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
+    with open('model', 'wb') as newFile:
+        newFile.write(model)
 
 imageNumber = 0
 
