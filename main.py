@@ -1,78 +1,55 @@
-from inference import get_roboflow_model
-import supervision as sv
-import math
 import cv2
-import time
-from poseEstimate import NotePoseEstimator
+import numpy as np
 
-start = time.time()
-# define the image url to use for inference
-video = cv2.VideoCapture(0)
+class ColorKeyer:
+    def __init__(self, color_lower=(139, 65, 36), color_upper=(255, 144, 94)):
+        """
+        Initialize the ColorKeyer class
+        Default values are set for orangez color keying
+        """
+        self.color_lower = np.array([5, 100, 100])
+        self.color_upper = np.array([15, 255, 255])
+        self.cap = cv2.VideoCapture(0)
+        
+    def run(self):
+        while True:
+            # Read frame from camera
+            ret, frame = self.cap.read()
+            if not ret:
+                break
+                
+            # Convert frame to HSV color space
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            
+            # Create mask for specified color range
+            mask = cv2.inRange(hsv, self.color_lower, self.color_upper)
+            
+            # Refine the mask
+            mask = cv2.erode(mask, None, iterations=2)
+            mask = cv2.dilate(mask, None, iterations=2)
+            
+            # Invert mask to key out the color
+            mask_inv = cv2.bitwise_not(mask)
+            
+            # Apply the mask to the original frame
+            result = cv2.bitwise_and(frame, frame, mask=mask_inv)
+            
+            # Display the result
+            cv2.imshow('Color Keyed', result)
+            
+            # Break loop with 'q' key
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+                
+    def __del__(self):
+        """Cleanup when the object is destroyed"""
+        self.cap.release()
+        cv2.destroyAllWindows()
 
-# load a pre-trained yolov8n model
-model = get_roboflow_model(model_id="note-detection-frc-2024/4", api_key="Q9t3AxF6Ra8qoPV2RqeC")
-imageNumber = 0
-
-noteCenterXandY = []
-
-note_estimator = NotePoseEstimator()
-note_estimator.camera_mount_height = 0.79
-note_estimator.camera_mount_angle = 45
-
-note_estimator.vertical_fov_angle = 27.0
-note_estimator.vertical_pixels = 480
-note_estimator.horizontal_fov_angle = 39.6
-note_estimator.horizontal_pixels = 640
-    
-# Returns the detection of a note
-def return_note(imgNum):
-    success, imgNum = video.read()
-    if success:
-        jpgImage = cv2.imencode('.jpg', imgNum)[1].tobytes()
-        results = model.infer(jpgImage)
-
-        detections = sv.Detections.from_inference(results[0].dict(by_alias=True, exclude_none=True))
-        return detections
-    else:
-        return "Frame Not Captured!"
-
-# Checks if there is a note
-def is_note(detections):
-    try:
-        return detections['class_name'] != None
-    except:
-        return True
-
-# Adds the center points of the note(s) to the list
-def add_center_points(detections):
-    global noteCenterXandY
-
-    if is_note(detections):
-        for item in detections['class_name']:
-            centerXPoint = (detections.xyxy[0][2] - detections.xyxy[0][0]) + detections.xyxy[0][0]
-            centerYPoint = (detections.xyxy[0][3] - detections.xyxy[0][1]) + detections.xyxy[0][1]
-
-            noteCenterXandY.append((centerXPoint, centerYPoint))
-
-# Main functionality of the program
-def note_in_camera(detections):
-    add_center_points(detections)
-    
-    # Gets (x,y) position of the note based on the camera
-    if is_note(detections):
-        for note in noteCenterXandY:
-            print(note_estimator.get_x_y_distance_from_pixels(note[0], note[1]))
-
-#expects the note offset where X is the forward distance and the robot position on the feild
-# returns a list of the note posit on the feild
-def toRobotPosit(noteX, noteY, robotX, robotY, robotRotation):
-    noteRotation=math.radians(robotRotation)+math.atan(noteY/noteX)
-    noteDisance=math.sqrt(noteX**2+noteY**2)
-    return [math.cos(noteRotation)*noteDisance+robotX, math.sin(noteRotation)*noteDisance+robotY]
-
-
-while True:
-    imageNumber += 1
-
-    detections = return_note(imageNumber)
-    note_in_camera(detections)
+# Example usage
+if __name__ == "__main__":
+    # Create keyer with default green values
+    keyer = ColorKeyer()
+    # Or specify custom HSV color range
+    # keyer = ColorKeyer(color_lower=(100, 50, 50), color_upper=(140, 255, 255))  # Blue
+    keyer.run()
