@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+orange_threshold = 0.6
+
 class ColorKeyer:
     def __init__(self):
         """
@@ -8,9 +10,10 @@ class ColorKeyer:
         Values set for orange color keying with oval detection
         """
         # Orange HSV range
-        self.color_lower = np.array([5, 100, 100])
-        self.color_upper = np.array([15, 255, 255])
-        self.cap = cv2.VideoCapture(0)
+        self.color_lower = np.array([0, 100, 100])
+        self.color_upper = np.array([20, 255, 255])
+        self.cap = cv2.VideoCapture("crecendoMatch.mp4")
+        self.speed_factor = 1.5  # Adjust this to control playback speed (2.0 = half speed)
         
     def is_orange_oval(self, contour, mask):
         """
@@ -27,7 +30,7 @@ class ColorKeyer:
         # Calculate percentage of orange pixels
         if total_pixels > 0:
             orange_ratio = orange_pixels / total_pixels
-            return orange_ratio > 0.6  # Adjust this threshold (60% orange)
+            return orange_ratio > orange_threshold  # Adjust this threshold (60% orange)
         return False
 
     def detect_ovals(self, mask):
@@ -48,6 +51,9 @@ class ColorKeyer:
         return ellipses
 
     def run(self):
+        fps = self.cap.get(cv2.CAP_PROP_FPS)
+        frame_delay = int((1000/fps) * self.speed_factor)
+        
         while True:
             ret, frame = self.cap.read()
             if not ret:
@@ -73,15 +79,15 @@ class ColorKeyer:
                 cv2.circle(frame, center, 2, (0, 0, 255), 3)
                 
                 # Print oval info
-                print(f"Orange oval detected - Center: {center}, "
-                      f"Axes: {ellipse[1]}, "
-                      f"Angle: {ellipse[2]:.1f}°")
+                # print(f"Orange oval detected - Center: {center}, "
+                #       f"Axes: {ellipse[1]}, "
+                #       f"Angle: {ellipse[2]:.1f}°")
             
             # Show both the mask and the final frame
             cv2.imshow('Orange Mask', mask)
             cv2.imshow('Orange Ovals Only', frame)
             
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(frame_delay) & 0xFF == ord('q'):
                 break
                 
     def __del__(self):
