@@ -12,7 +12,7 @@ class ColorKeyer:
         # Orange HSV range
         self.color_lower = np.array([0, 100, 100])
         self.color_upper = np.array([20, 255, 255])
-        self.cap = cv2.VideoCapture("crecendoMatch.mp4")
+        self.cap = cv2.VideoCapture(0)
         self.speed_factor = 1.5  # Adjust this to control playback speed (2.0 = half speed)
         
     def is_orange_oval(self, contour, mask):
@@ -51,8 +51,8 @@ class ColorKeyer:
         return ellipses
 
     def run(self):
-        fps = self.cap.get(cv2.CAP_PROP_FPS)
-        frame_delay = int((1000/fps) * self.speed_factor)
+        # fps = self.cap.get(cv2.CAP_PROP_FPS)
+        # frame_delay = int((1000/fps) * self.speed_factor)
         
         while True:
             ret, frame = self.cap.read()
@@ -87,11 +87,10 @@ class ColorKeyer:
             cv2.imshow('Orange Mask', mask)
             cv2.imshow('Orange Ovals Only', frame)
             
-            if cv2.waitKey(frame_delay) & 0xFF == ord('q'):
-                break
+            # if cv2.wpip i
                 
     def __del__(self):
-        self.cap.release()
+        # self.cap.release()
         cv2.destroyAllWindows()
 
 # Example usage
