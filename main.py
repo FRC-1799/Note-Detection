@@ -1,55 +1,65 @@
-import cv2
-import numpy as np
+import time
+from typing import Optional
+import ntcore
+from photonlibpy.estimatedRobotPose import EstimatedRobotPose
+from photonlibpy.photonCamera import PhotonCamera
+from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
+import robotpy_apriltag as apriltag
+from wpimath.geometry import Transform3d, Pose2d
+from constants import PhotonLibConstants
 
-class ColorKeyer:
-    def __init__(self, color_lower=(139, 65, 36), color_upper=(255, 144, 94)):
-        """
-        Initialize the ColorKeyer class
-        Default values are set for orangez color keying
-        """
-        self.color_lower = np.array([5, 100, 100])
-        self.color_upper = np.array([15, 255, 255])
-        self.cap = cv2.VideoCapture(0)
-        
-    def run(self):
-        while True:
-            # Read frame from camera
-            ret, frame = self.cap.read()
-            if not ret:
-                break
-                
-            # Convert frame to HSV color space
-            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            
-            # Create mask for specified color range
-            mask = cv2.inRange(hsv, self.color_lower, self.color_upper)
-            
-            # Refine the mask
-            mask = cv2.erode(mask, None, iterations=2)
-            mask = cv2.dilate(mask, None, iterations=2)
-            
-            # Invert mask to key out the color
-            mask_inv = cv2.bitwise_not(mask)
-            
-            # Apply the mask to the original frame
-            result = cv2.bitwise_and(frame, frame, mask=mask_inv)
-            
-            # Display the result
-            cv2.imshow('Color Keyed', result)
-            
-            # Break loop with 'q' key
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-                
-    def __del__(self):
-        """Cleanup when the object is destroyed"""
-        self.cap.release()
-        cv2.destroyAllWindows()
+class GrabPhotonCameraInfo:
+    def __init__(self, cameraName):
+        self.cameraName = cameraName
+        self.camera = PhotonCamera(self.cameraName)
 
-# Example usage
+        self.estimator = PhotonPoseEstimator(
+            apriltag.loadAprilTagLayoutField(apriltag.AprilTagField.k2024Crescendo),
+            PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+            self.camera,
+            PhotonLibConstants.ROBOT_TO_CAMERA_TRANSFORMATION,
+        )
+
+        self.estimator.multiTagFallbackStrategy = PoseStrategy.LOWEST_AMBIGUITY
+
+
+    def get_estimated_global_pose(self) -> Optional[EstimatedRobotPose]:
+        return self.estimator.update()
+
+
+    def get_estimated_global_pose_2d(self) -> Optional[Pose2d]:
+        result = self.estimator.update()
+        if result:
+            return result.estimatedPose.toPose2d()
+
+
+    def get_tags(self) -> dict[int, Transform3d]:
+        photon_result = self.camera.getLatestResult().getTargets()
+
+        tags = {}
+        for target in photon_result:
+            # Skip target if its pose is too ambiguous
+            if target.poseAmbiguity > 0.2:
+                continue
+
+            tags[target.fiducialId] = target.bestCameraToTarget
+
+        return tags
+
+photonInformation = GrabPhotonCameraInfo(PhotonLibConstants.CAMERA_NAME)
+
 if __name__ == "__main__":
-    # Create keyer with default green values
-    keyer = ColorKeyer()
-    # Or specify custom HSV color range
-    # keyer = ColorKeyer(color_lower=(100, 50, 50), color_upper=(140, 255, 255))  # Blue
-    keyer.run()
+    inst = ntcore.NetworkTableInstance.getDefault()
+    inst.startServer()
+    print("NT server started!")
+
+    while True:
+        time.sleep(0.02)
+
+        # Robot pose estimation
+        position = photonInformation.get_estimated_global_pose()
+
+        # Check if the pose is valid
+        if position:
+            
+            print(f"X: {position.x}, Y: position = position.estimatedPose{position.y}, Z: {position.z}")
