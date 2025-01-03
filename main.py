@@ -74,7 +74,6 @@ class GrabPhotonCameraInfo:
 if __name__ == "__main__":
     inst = ntcore.NetworkTableInstance.getDefault()
     inst.startServer()
-    #sd = inst.getTable("SmartDashboard")
     print("NT server started!")
 
     grabAprilTagInformation = GrabPhotonCameraInfo(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, "Pose")
@@ -93,9 +92,6 @@ if __name__ == "__main__":
         if position:
             position = position.estimatedPose
             print(f"X: {position.x}, Y: position = position.estimatedPose{position.y}, Z: {position.z}")
-            #sd.putNumber("Robot Pose X", position.translation().x)
-            #sd.putNumber("Robot Pose Y", position.translation().y)
-            #sd.putNumber("Robot Pose Z", position.translation().z)
 
         # note = grabNoteInformation.get_closest_note()
         # if note:
