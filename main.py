@@ -15,6 +15,14 @@ class GrabPhotonCameraInfo:
     """
 
     def __init__(self, cameraName: str, cameraType: str = "Note"):
+        """
+        When initialized, a PhotonCamera will be created, along with a PhotonPoseEstimator if the camera being passed is supposed to detect April Tags.
+        
+        Parameters: 
+        cameraName  (str): Name of a camera in String format. Used to find which camera is being used in Photon Vision. 
+        cameraType (str): Optional Parameter that is what the camera will be doing. If it is detecting April Tags, pass Pose in for it, and leave the parameter blank if it is detecting objects.
+        """
+
         self.cameraName = cameraName
         self.camera = PhotonCamera(self.cameraName)
 
@@ -40,6 +48,9 @@ class GrabPhotonCameraInfo:
     def get_tags(self) -> dict[int, Transform3d]:
         """
         Gets April Tags found in the camera and returns them with their id number and estimated location.
+
+        Returns:
+        Dictionary[integer, Transform3d]: The integer is the ID for the April Tag and the Transform3d is the position of the tag
         """
 
         photon_result = self.camera.getLatestResult().getTargets()
@@ -56,6 +67,10 @@ class GrabPhotonCameraInfo:
     def get_closest_note(self) -> Optional[PhotonTrackedTarget]:
         """
         Gets the targets found in the camera and determines which note is the closest based on its area, and returns it.
+
+        Returns:
+        None (None): if there are no notes
+        Note Information (PhotonTrackedTarget): Information about the note (pitch, yaw, etc.)
         """
 
         targets = self.camera.getLatestResult().getTargets()
@@ -86,7 +101,6 @@ if __name__ == "__main__":
 
         # Robot pose estimation
         position = grabAprilTagInformation.get_estimated_global_pose()
-        print("hye", position)
 
         # Check if the pose is valid
         if position:
