@@ -14,7 +14,7 @@ class GrabPhotonCameraInfo:
     Pulls camera information down from Network Tables.
     """
 
-    def __init__(self, cameraName: str, cameraType = "Note"):
+    def __init__(self, cameraName: str, cameraType: str = "Note"):
         self.cameraName = cameraName
         self.camera = PhotonCamera(self.cameraName)
 
@@ -74,23 +74,31 @@ class GrabPhotonCameraInfo:
 if __name__ == "__main__":
     inst = ntcore.NetworkTableInstance.getDefault()
     inst.startServer()
+    #sd = inst.getTable("SmartDashboard")
     print("NT server started!")
 
-    #grabAprilTagInformation = GrabPhotonCameraInfo(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, "Pose")
-    grabNoteInformation = GrabPhotonCameraInfo(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
+    grabAprilTagInformation = GrabPhotonCameraInfo(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, "Pose")
+    # grabNoteInformation = GrabPhotonCameraInfo(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
 
     while True:
         time.sleep(0.02)
 
+        targets = grabAprilTagInformation.get_tags()
+
         # Robot pose estimation
-        #position = grabAprilTagInformation.get_estimated_global_pose()
+        position = grabAprilTagInformation.get_estimated_global_pose()
+        print("hye", position)
 
         # Check if the pose is valid
-        #if position:
-        #    print(f"X: {position.x}, Y: position = position.estimatedPose{position.y}, Z: {position.z}")
+        if position:
+            position = position.estimatedPose
+            print(f"X: {position.x}, Y: position = position.estimatedPose{position.y}, Z: {position.z}")
+            #sd.putNumber("Robot Pose X", position.translation().x)
+            #sd.putNumber("Robot Pose Y", position.translation().y)
+            #sd.putNumber("Robot Pose Z", position.translation().z)
 
-        note = grabNoteInformation.get_closest_note()
-        if note:
-            transform = note.bestCameraToTarget
-            print(f"dYaw: {note.yaw}")
-            print(f"(feet) x: {transform.x_feet}, y: {transform.y_feet}, z: {transform.z_feet}")
+        # note = grabNoteInformation.get_closest_note()
+        # if note:
+        #     transform = note.bestCameraToTarget
+        #     print(f"dYaw: {note.yaw}")
+        #     print(f"(feet) x: {transform.x_feet}, y: {transform.y_feet}, z: {transform.z_feet}")
