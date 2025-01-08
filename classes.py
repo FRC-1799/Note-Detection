@@ -145,3 +145,6 @@ class AprilTagCamera:
         aprilTagIndex (int): index of the April Tag to go to
         """
 
+        position = apriltag.getAprilTagPose(aprilTagIndex)
+        
+
