@@ -55,6 +55,10 @@ class AprilTagCamera:
             tags[target.fiducialId] = target.bestCameraToTarget
 
         return tags
+    
+    def fetch_robot_position(self):
+        position = self.get_estimated_global_pose()  # Get robot position
+        return position
 
 # class GrabPhotonCameraInfo:
 #     """
