@@ -45,9 +45,10 @@ class AprilTagCamera:
         Dictionary[integer, Transform3d]: The integer is the ID for the April Tag and the Transform3d is the position of the tag
         """
 
-        photon_result = self.camera.getLatestResult().getTargets()
+        photon_result = self.camera.getLatestResult()
+        resultTargets = photon_result.getTargets()
         tags = {}
-        for target in photon_result:
+        for target in resultTargets:
             # Skip target if its pose is too ambiguous
             if target.poseAmbiguity > 0.2:
                 continue
@@ -60,6 +61,24 @@ class AprilTagCamera:
         position = self.get_estimated_global_pose()  # Get robot position
         return position
 
+class CoralCamera:
+    def __init__(self, cameraName):
+        self.cameraName = cameraName
+        self.camera = PhotonCamera(self.cameraName)
+
+    def get_targets(self):
+        photonResult = self.camera.getLatestResult()
+        targets = photonResult.getTargets()
+
+        corals = {}
+        for target in targets:
+            # Skip target if its pose is too ambiguous
+            if target.poseAmbiguity > 0.2:
+                continue
+
+            corals[target.fiducialId] = target.bestCameraToTarget
+
+        return corals
 # class GrabPhotonCameraInfo:
 #     """
 #     Pulls camera information down from Network Tables.
