@@ -1,11 +1,15 @@
 import time
+import os
+os.path.join("lib/python3.12/site-packages/")
 import ntcore
+
 from constants import PhotonLibConstants
 from classes import AprilTagCamera
 import multiprocessing
 
 # Start NT server
 inst = ntcore.NetworkTableInstance.getDefault()
+inst.setServerTeam(1799)
 inst.startServer()
 table = inst.getTable("Robot Values")
 
