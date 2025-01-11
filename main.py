@@ -2,7 +2,8 @@ import time
 import os
 os.path.join("lib/python3.12/site-packages/")
 import ntcore
-
+import cv2
+from pynput.mouse import Controller
 from constants import PhotonLibConstants
 from classes import AprilTagCamera
 import multiprocessing
@@ -12,7 +13,6 @@ from wpimath.geometry import Pose3d, Transform3d, Rotation3d
 inst = ntcore.NetworkTableInstance.getDefault()
 inst.stopServer()
 inst.setServerTeam(1799)
-inst.setServer("127.0.0.1")
 inst.startServer()
 
 topic = inst.getStructTopic("RobotValues", Pose3d)
@@ -38,13 +38,13 @@ def publish_robot_position(robotPosition: Pose3d):
     table.putNumberArray("Robot Location", translation3D)
     table.putNumberArray("Robot Rotation", rotation3D)
 
+
 def main():
     while True:
         print(inst.isConnected())
         # Get tags from the camera (or any other data you need)
         targets = grabAprilTagInformation.get_tags()
         
-
         if targets:  # If there are targets detected
             # Create a new process to fetch the robot position
 
@@ -65,6 +65,10 @@ def main():
                 duration = end_time - start_time
 
                 print(f"Process took {duration:.2f} seconds.")
+
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            inst.stopServer()
+            break
 
 if __name__ == "__main__":
     main()
