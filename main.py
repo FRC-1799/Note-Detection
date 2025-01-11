@@ -10,11 +10,14 @@ from wpimath.geometry import Pose3d, Transform3d, Rotation3d
 
 # Start NT server
 inst = ntcore.NetworkTableInstance.getDefault()
+inst.stopServer()
 inst.setServerTeam(1799)
+inst.setServer("127.0.0.1")
 inst.startServer()
-table = inst.getTable("RobotValues")
-pose_topic = table.getStructTopic("pose", Pose3d)
 
+topic = inst.getStructTopic("RobotValues", Pose3d)
+publisher = topic.getEntry("Pose3d")
+table = inst.getTable("hehehea")
 
 
 # Create an instance of the AprilTag camera
@@ -26,19 +29,21 @@ def fetch_robot_position() -> Pose3d:
     return position
 
 def publish_robot_position(robotPosition: Pose3d):
-    # translation3D = [robotPosition.translation().x, robotPosition.translation().y, robotPosition.translation().z]
-    # rotation3D =  [robotPosition.rotation().x, robotPosition.rotation().y, robotPosition.rotation().z]
+    translation3D = [robotPosition.translation().x, robotPosition.translation().y, robotPosition.translation().z]
+    rotation3D =  [robotPosition.rotation().x, robotPosition.rotation().y, robotPosition.rotation().z]
 
-    pose_topic.set(robotPosition)
+    publisher.set(robotPosition)
 
-    # table.putNumberArray("Robot Location", translation3D)
-    # table.putNumberArray("Robot Rotation", rotation3D)
+
+    table.putNumberArray("Robot Location", translation3D)
+    table.putNumberArray("Robot Rotation", rotation3D)
 
 def main():
     while True:
-
+        print(inst.isConnected())
         # Get tags from the camera (or any other data you need)
         targets = grabAprilTagInformation.get_tags()
+        
 
         if targets:  # If there are targets detected
             # Create a new process to fetch the robot position
@@ -51,14 +56,15 @@ def main():
             robot_position_process.join()
             position = fetch_robot_position()
 
-            end_time = time.time()
-            duration = end_time - start_time
-
-            print(f"Process took {duration:.2f} seconds.")
+            
             
             # Check if the pose is valid
             if position:
                 publish_robot_position(position.estimatedPose)
+                end_time = time.time()
+                duration = end_time - start_time
+
+                print(f"Process took {duration:.2f} seconds.")
 
 if __name__ == "__main__":
     main()
