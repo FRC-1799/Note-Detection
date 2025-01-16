@@ -50,7 +50,7 @@ def main():
             position = fetch_robot_position()
         
             if position:
-                publisher.set(position)
+                publisher.set(position.estimatedPose)
 
         
 
