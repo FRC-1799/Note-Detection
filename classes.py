@@ -3,7 +3,7 @@ from photonlibpy.estimatedRobotPose import EstimatedRobotPose
 from photonlibpy.photonCamera import PhotonCamera
 from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
 import robotpy_apriltag as apriltag
-from wpimath.geometry import Transform3d, Pose2d,Pose3d
+from wpimath.geometry import Transform3d, Pose2d, Pose3d, Translation3d
 import constants
 
 class AprilTagCamera:
@@ -65,6 +65,7 @@ class CoralCamera:
     def __init__(self, cameraName):
         self.cameraName = cameraName
         self.camera = PhotonCamera(self.cameraName)
+        self.reef = constants.PhotonLibConstants.POSE3D_REEF_LOCATIONS
 
     def get_targets(self):
         photonResult = self.camera.getLatestResult()
@@ -73,10 +74,56 @@ class CoralCamera:
         self.corals = []
         for target in targets:
             # Skip target if its pose is too ambiguous
-            if target.poseAmbiguity > 0.2:
+            if target.poseAmbiguity > constants.PhotonLibConstants.POSE_AMBIGUITY_TOLERANCE:
                 continue
 
             self.corals.append(target.bestCameraToTarget)
     
-    def distance_to_robot(self) -> Pose3d:
-        self.corals
+    def coral_field_position_percent(self, robotPosition: Pose3d):
+        coralPositions = []
+
+        for coral in self.corals:
+            distanceToCoral = self.__area_percent_to_meters(coral.area)
+            coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
+            coralPositions.append(coralFieldPosition)
+
+        return coralPositions
+
+    def coral_field_position_math(self, robotPosition: Pose3d):
+        coralPositions = []
+
+        for coral in self.corals:
+            distanceToCoral = self.__find_coral_pose_math(coral)
+            coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
+            coralPositions.append(coralFieldPosition)
+
+        return coralPositions
+
+    def coral_reef_location(self, reefFilledList, coralPositions):
+        self.coralOnReefs = []
+        copiedReefList = reefFilledList
+
+        for coralPose in coralPositions:
+            if not self.__coral_xy_in_reef(coralPose):
+                return None
+            for levelIndex, level in enumerate(self.reef):
+                for reefPose in level:
+                    coralInReef = True if coralPose.X() > reefPose.X() and coralPose.X() < reefPose.X() + constants.PhotonLibConstants.REEF_WIDTH and coralPose.Y() > reefPose.Y() and coralPose.Y() < reefPose.Y() + reefPose.Y() + constants.PhotonLibConstants.REEF_WIDTH and coralPose.Z() > reefPose.Z() and coralPose.Z() < reefPose.Z() + reefPose.Z() + constants.PhotonLibConstants.REEF_HEIGHT else False
+                    copiedReefList[levelIndex][level.index(reefPose)] = 1 if coralInReef else 0
+
+        return copiedReefList
+
+    def __area_percent_to_meters(self, percentage: float) -> Pose3d:
+        pass
+
+    def __coral_xy_in_reef(self, coralPos: Pose3d) -> bool:
+        pass
+    
+    def __find_coral_pose_math(self, coral: Pose3d) -> Pose3d:
+        pass
+
+    def __find_coral_field_pose(self, distanceToCoral: Pose3d, robotPosition: Pose3d) -> Translation3d:
+        translationOfCoralPose = distanceToCoral.translation()
+        translationOfRobotPose = robotPosition.translation()
+        coralFieldPosition = translationOfCoralPose + translationOfRobotPose
+        return coralFieldPosition

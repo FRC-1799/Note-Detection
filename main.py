@@ -42,7 +42,6 @@ def main():
             break
         
         if targets:
-
             robot_position_process = multiprocessing.Process(target=fetch_robot_position)
             
             robot_position_process.start()
