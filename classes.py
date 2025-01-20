@@ -5,6 +5,7 @@ from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
 import robotpy_apriltag as apriltag
 from wpimath.geometry import Transform3d, Pose2d, Pose3d, Translation3d
 import constants
+import math
 
 class AprilTagCamera:
 
@@ -119,8 +120,14 @@ class CoralCamera:
     def __coral_xy_in_reef(self, coralPos: Pose3d) -> bool:
         pass
     
-    def __find_coral_pose_math(self, coral: Pose3d) -> Pose3d:
-        pass
+    def __find_coral_pose_math(self, coral: tuple[int, int]) -> Pose3d:
+        coralX, coralY = coral[0], coral[1]
+
+        y_distance = - self.__mount_height / math.tan(coralY * self._vert_angle_per_pixel - (self.__vert_fov_angle_rad/2) - self.__mount_angle_rad)
+        y_dist_hyp = math.sqrt(self.__mount_height**2 + y_distance**2)
+        x_distance = y_dist_hyp * math.tan(coralX * self._horiz_angle_per_pixel - (self.__horiz_fov_angle_rad/2))
+        return (x_distance, y_distance)
+
 
     def __find_coral_field_pose(self, distanceToCoral: Pose3d, robotPosition: Pose3d) -> Translation3d:
         translationOfCoralPose = distanceToCoral.translation()
