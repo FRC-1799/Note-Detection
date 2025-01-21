@@ -68,7 +68,9 @@ class CoralCamera:
         self.camera = PhotonCamera(self.cameraName)
         self.reef = constants.PhotonLibConstants.POSE3D_REEF_LOCATIONS
 
-    def get_targets(self):
+    def get_coral(self):
+        """Gathers the targets located in the camera. In this case"""
+
         photonResult = self.camera.getLatestResult()
         targets = photonResult.getTargets()
 
@@ -84,9 +86,10 @@ class CoralCamera:
         coralPositions = []
 
         for coral in self.corals:
-            distanceToCoral = self.__area_percent_to_meters(coral.area)
-            coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
-            coralPositions.append(coralFieldPosition)
+            coralAreaPercentage
+            # distanceToCoral = self.__area_percent_to_meters(coral.area)
+            # coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
+            # coralPositions.append(coralFieldPosition)
 
         return coralPositions
 
@@ -127,7 +130,6 @@ class CoralCamera:
         y_dist_hyp = math.sqrt(self.__mount_height**2 + y_distance**2)
         x_distance = y_dist_hyp * math.tan(coralX * self._horiz_angle_per_pixel - (self.__horiz_fov_angle_rad/2))
         return (x_distance, y_distance)
-
 
     def __find_coral_field_pose(self, distanceToCoral: Pose3d, robotPosition: Pose3d) -> Translation3d:
         translationOfCoralPose = distanceToCoral.translation()
