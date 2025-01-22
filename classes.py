@@ -68,35 +68,33 @@ class CoralCamera:
         self.camera = PhotonCamera(self.cameraName)
         self.reef = constants.PhotonLibConstants.POSE3D_REEF_LOCATIONS
 
-    def get_coral(self):
+    def get_targets(self):
         """Gathers the targets located in the camera. In this case"""
 
         photonResult = self.camera.getLatestResult()
         targets = photonResult.getTargets()
 
-        self.corals = []
+        self.targets = []
         for target in targets:
             # Skip target if its pose is too ambiguous
             if target.poseAmbiguity > constants.PhotonLibConstants.POSE_AMBIGUITY_TOLERANCE:
                 continue
 
-            self.corals.append(target.bestCameraToTarget)
+            self.targets.append(target.bestCameraToTarget)
     
-    def coral_field_position_percent(self, robotPosition: Pose3d):
+    def reefs_with_coral(self, robotPosition: Pose3d, ):
         coralPositions = []
 
-        for coral in self.corals:
-            coralAreaPercentage
+        for coral in self.targets:
+
             # distanceToCoral = self.__area_percent_to_meters(coral.area)
             # coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
             # coralPositions.append(coralFieldPosition)
 
-        return coralPositions
-
     def coral_field_position_math(self, robotPosition: Pose3d):
         coralPositions = []
 
-        for coral in self.corals:
+        for coral in self.targets:
             distanceToCoral = self.__find_coral_pose_math(coral)
             coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
             coralPositions.append(coralFieldPosition)
