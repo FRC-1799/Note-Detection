@@ -7,6 +7,7 @@ import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d
 import keyboard
 
+
 # Start NT server
 inst = ntcore.NetworkTableInstance.getDefault()
 inst.stopServer()

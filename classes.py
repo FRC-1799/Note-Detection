@@ -1,11 +1,14 @@
+import robotpy_apriltag as apriltag
+import constants
+import math
+
 from typing import Optional
 from photonlibpy.estimatedRobotPose import EstimatedRobotPose
 from photonlibpy.photonCamera import PhotonCamera
 from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
-import robotpy_apriltag as apriltag
 from wpimath.geometry import Transform3d, Pose2d, Pose3d, Translation3d
-import constants
-import math
+from photonlibpy.photonTrackedTarget import TargetCorner
+
 
 class AprilTagCamera:
 
@@ -82,14 +85,22 @@ class CoralCamera:
 
             self.targets.append(target.bestCameraToTarget)
     
-    def reefs_with_coral(self, robotPosition: Pose3d, ):
+    def reefs_with_coral(self, robotPosition: Pose3d, reefs: list):
         coralPositions = []
 
-        for coral in self.targets:
+        if len(self.targets) > 1:
+            for coral in self.targets:
+                for reef in reefs:
+                    coralRect, reefRect = coral.getMinAreaRectCorners(), reef.getMinAreaRectCorners()
+                    coralBlockingReef = self.__rect_inside_another_rect(reefRect, coralRect) # will occur when the coral is on level 2 or 3
+                    if coralBlockingReef:
+                        for reef in reefs:
+                            if reef.getMinAreaRectCorners()[2].y > coralRect[0].y:
+                                
 
-            # distanceToCoral = self.__area_percent_to_meters(coral.area)
-            # coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
-            # coralPositions.append(coralFieldPosition)
+                # distanceToCoral = self.__area_percent_to_meters(coral.area)
+                # coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
+                # coralPositions.append(coralFieldPosition)
 
     def coral_field_position_math(self, robotPosition: Pose3d):
         coralPositions = []
@@ -134,3 +145,18 @@ class CoralCamera:
         translationOfRobotPose = robotPosition.translation()
         coralFieldPosition = translationOfCoralPose + translationOfRobotPose
         return coralFieldPosition
+    
+    def __rect_inside_another_rect(self, rect1: list[TargetCorner], rect2: list[TargetCorner]) -> bool:
+        """
+        Checks if a rectangle (rect1) is inside of another rectangle (rect2).
+        """
+        def get_bounds(rect: list[TargetCorner]):
+            xCoords = [corner.x for corner in rect]
+            yCoords = [corner.y for corner in rect]
+            return min(xCoords), max(xCoords), min(yCoords), max(yCoords)
+
+        rect1_min_x, rect1_max_x, rect1_min_y, rect1_max_y = get_bounds(rect1)
+        rect2_min_x, rect2_max_x, rect2_min_y, rect2_max_y = get_bounds(rect2)
+
+        return (rect1_min_x >= rect2_min_x and rect1_max_x <= rect2_max_x and
+                rect1_min_y >= rect2_min_y and rect1_max_y <= rect2_max_y)
