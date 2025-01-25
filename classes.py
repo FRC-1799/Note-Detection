@@ -69,20 +69,6 @@ class CoralCamera:
     def __init__(self, cameraName):
         self.cameraName = cameraName
         self.camera = PhotonCamera(self.cameraName)
-        self.reef = [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0]
-        ]
 
     def get_targets(self):
         """
@@ -100,7 +86,8 @@ class CoralCamera:
 
             self.targets.append(target.bestCameraToTarget)
     
-    def reefs_with_coral(self, robotPosition: Pose3d, reefs: list[TargetCorner], corals: list[TargetCorner]):
+    def reefs_with_coral(self, robotPosition: Pose3d, reefs: list[TargetCorner], corals: list[TargetCorner], reef: list):
+        reefCopy = reef
         sortedReefs = [] # highest -> lowest
         coralAndReefs = reefs + corals
         sortedReefLevels = []
@@ -117,21 +104,29 @@ class CoralCamera:
                 sortedReefs.append(reef)
 
         if len(coralAndReefs) == 6:
-            xpos = 0 # 0 is left, 1 is right
-            ypos = 0 # level 0 is acutally level 2, level 1 is level 3, and level 2 is L4
+            xpos = None # 0 is left, 1 is right
+            ypos = None # level 0 is acutally level 2, level 1 is level 3, and level 2 is L4
             for reefOrCoral in coralAndReefs:
                 reefRect = reefOrCoral.getMinAreaRectCorners()
                 if reefRect[0].x - constants.PhotonLibConstants.REEF_X_TOLERANCE < all([xVal[0].x for xVal in coralAndReefs]):
-                    xpos = 0
+                    if reefOrCoral in corals:
+                        xpos = 0
                 elif reefRect[1].x + constants.PhotonLibConstants.REEF_X_TOLERANCE > all([xVal[1].x for xVal in coralAndReefs]):
-                    xpos = 1
+                    if reefOrCoral in corals:
+                        xpos = 1
 
                 if reefRect[0].y - constants.PhotonLibConstants.REEF_Y_TOLERANCE < all([yVal[0].y for yVal in coralAndReefs]):
-                    ypos = 2
+                    if reefOrCoral in corals:
+                        ypos = 2
                 elif reefRect[2].y + constants.PhotonLibConstants.REEF_Y_TOLERANCE > all([yVal[2].y for yVal in coralAndReefs]):
-                    ypos = 0
+                    if reefOrCoral in corals:
+                        ypos = 0
                 else:
-                    ypos = 1
+                    if reefOrCoral in corals:
+                        ypos = 1
+
+                if xpos != None and ypos != None:
+                    return reef
 
                 
                 
