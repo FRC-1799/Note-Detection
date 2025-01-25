@@ -15,7 +15,7 @@ class AprilTagCamera:
     def __init__(self, cameraName: str):
         """
         When initialized, a PhotonCamera will be created, along with a PhotonPoseEstimator if the camera being passed is supposed to detect April Tags.
-        
+
         Parameters:
         cameraName  (str): Name of a camera in String format. Used to find which camera is being used in Photon Vision.
         cameraType (str): Optional Parameter that is what the camera will be doing. If it is detecting April Tags, pass Pose in for it, and leave the parameter blank if it is detecting objects.
@@ -60,15 +60,16 @@ class AprilTagCamera:
             tags[target.fiducialId] = target.bestCameraToTarget
 
         return tags
-    
+
     def fetch_robot_position(self):
         position = self.get_estimated_global_pose()  # Get robot position
         return position
 
 class CoralCamera:
-    def __init__(self, cameraName):
+    def __init__(self, cameraName, team):
         self.cameraName = cameraName
         self.camera = PhotonCamera(self.cameraName)
+        self.team = team
 
     def get_targets(self):
         """
@@ -85,63 +86,102 @@ class CoralCamera:
                 continue
 
             self.targets.append(target.bestCameraToTarget)
-    
-    def reefs_with_coral(self, robotPosition: Pose3d, reefs: list[TargetCorner], corals: list[TargetCorner], reef: list):
+
+    def reefs_with_coral(self, aprilTagIndex: int, reefs: list[TargetCorner], corals: list[TargetCorner], reef: list):
         reefCopy = reef
         sortedReefs = [] # highest -> lowest
-        coralAndReefs = reefs + corals
+
         sortedReefLevels = []
 
-        for reef in reefs:
-            reefRect = reef.getMinAreaRectCorners()
-            for sortedReef in sortedReefs:
-                sortedReefRect = sortedReef.getMinAreaRectCorners()
-                if sortedReefRect[2].y < reefRect[2].y:
-                    sortedReefs.insert(sortedReefs.index(sortedReef), reefRect)
-            
-            # If the lowest sorted reef is still higher than the reef, appened said reef to the end of sortedReefs
-            if sortedReefRect[2].y > reefRect[2].y:
-                sortedReefs.append(reef)
+        # for reef in reefs:
+        #     reefRect = reef.getMinAreaRectCorners()
+        #     for sortedReef in sortedReefs:
+        #         sortedReefRect = sortedReef.getMinAreaRectCorners()
+        #         if sortedReefRect[2].y < reefRect[2].y:
+        #             sortedReefs.insert(sortedReefs.index(sortedReef), reefRect)
 
-        if len(coralAndReefs) == 6:
-            xpos = None # 0 is left, 1 is right
-            ypos = None # level 0 is acutally level 2, level 1 is level 3, and level 2 is L4
-            for reefOrCoral in coralAndReefs:
-                reefRect = reefOrCoral.getMinAreaRectCorners()
-                if reefRect[0].x - constants.PhotonLibConstants.REEF_X_TOLERANCE < all([xVal[0].x for xVal in coralAndReefs]):
-                    if reefOrCoral in corals:
-                        xpos = 0
-                elif reefRect[1].x + constants.PhotonLibConstants.REEF_X_TOLERANCE > all([xVal[1].x for xVal in coralAndReefs]):
-                    if reefOrCoral in corals:
-                        xpos = 1
+        #     # If the lowest sorted reef is still higher than the reef, appened said reef to the end of sortedReefs
+        #     if sortedReefRect[2].y > reefRect[2].y:
+        #         sortedReefs.append(reef)
 
-                if reefRect[0].y - constants.PhotonLibConstants.REEF_Y_TOLERANCE < all([yVal[0].y for yVal in coralAndReefs]):
-                    if reefOrCoral in corals:
-                        ypos = 2
-                elif reefRect[2].y + constants.PhotonLibConstants.REEF_Y_TOLERANCE > all([yVal[2].y for yVal in coralAndReefs]):
-                    if reefOrCoral in corals:
-                        ypos = 0
+        coralAndReefs = []
+
+        for coral in self.targets:
+            for reef in sortedReefs:
+                # Makes a list of the corals and the reefs
+                coralRect, reefRect = coral.getMinAreaRectCorners(), reef.getMinAreaRectCorners()
+                coralOnReef = self.__rect_touching_another_rect(reefRect, coralRect)
+                if coralOnReef:
+                    if coralRect[0].y >= reefRect[0].y:
+                        # Combined the coral and reefs to create a larger hitbox so even if the coral 
+                        # covers the reef, the reef's position will still be recognized
+                        reefAndCoralRect = [TargetCorner(coralRect[0].x, coralRect[0].y), 
+                                            TargetCorner(coralRect[1].x, coralRect[1].y),
+                                            TargetCorner(reefRect[2].x, reefRect[2].y),
+                                            TargetCorner(reefRect[3].x, reefRect[3].y)]
+                        coralAndReefs.append(reefAndCoralRect)
+                    elif coralRect[0].y < reefRect[0].y:
+                        reefAndCoralRect = [TargetCorner(reefRect[0].x, reefRect[0].y), 
+                                            TargetCorner(reefRect[1].x, reefRect[1].y),
+                                            TargetCorner(coralRect[2].x, coralRect[2].y),
+                                            TargetCorner(coralRect[3].x, coralRect[3].y)]
+                        coralAndReefs.append(reefAndCoralRect)
                 else:
-                    if reefOrCoral in corals:
-                        ypos = 1
+                    # Since there is no coral on the reef, we just append it to the rects
+                    coralAndReefs.append(reef)
 
-                if xpos != None and ypos != None:
-                    return reef
 
-                
-                
+        coralPositions = []
+        xpos = None # 0 is left, 1 is right
+        ypos = None # level 2 is level 2
+        for reefOrCoral in coralAndReefs:
+            reefRect = reefOrCoral.getMinAreaRectCorners()
+            coralAndReefs.remove(reefOrCoral) # we dont want to check this value, as reflexive property
 
-                
+            mostLeftValue = [
+                True if reefRect[0].x - constants.PhotonLibConstants.REEF_X_TOLERANCE < xVal[0].x else False
+                for xVal in coralAndReefs
+            ]
+            mostRightValue = [
+                True if reefRect[1].x + constants.PhotonLibConstants.REEF_X_TOLERANCE > xVal[1].x else False
+                for xVal in coralAndReefs
+            ]
+            closestToTop = [
+                True if reefRect[0].y - constants.PhotonLibConstants.REEF_Y_TOLERANCE < xVal[0].y else False
+                for xVal in coralAndReefs
+            ]
+            closestToBottom = [
+                True if reefRect[2].y + constants.PhotonLibConstants.REEF_Y_TOLERANCE > xVal[2].y else False
+                for xVal in coralAndReefs
+            ]
 
-                
-        if len(self.targets) > 1:
-            for coral in self.targets:
-                for reef in sortedReefs:
-                    coralRect, reefRect = coral.getMinAreaRectCorners(), reef.getMinAreaRectCorners()
-                    coralOnReef = self.__rect_inside_another_rect(reefRect, coralRect) # might occur when the coral is on level 2 or 3
-                    if coralOnReef:
-                        reefIndex = self.__reef_looking_index()
-                        
+            if reefOrCoral in corals:
+                xpos = 0 if all(mostLeftValue) else 1 if all(mostRightValue) else None
+                ypos = 4 if all(closestToTop) else 2 if all(closestToBottom) else 3
+
+            if xpos != None and ypos != None:
+                reefIndex = self.__reef_looking_index(aprilTagIndex)
+                coralPositions.append([(xpos, ypos), reefIndex])
+
+            # if all(closestToTop):
+            #     if reefOrCoral in corals:
+            #         ypos = 4
+            # elif all(closestToBottom):
+            #     if reefOrCoral in corals:
+            #         ypos = 2
+            # else:
+            #     if reefOrCoral in corals:
+            #         ypos = 3
+
+
+        coralAndReefs.append(reefOrCoral)
+            
+        for position in coralPositions:
+            xyPos, reefIndex = position[0], position[1]
+            reefCopy[reefIndex[xyPos[0]]][xyPos[1]] = True
+
+        return reefCopy
+
 
     def coral_reef_location(self, reefFilledList, coralPositions):
         self.coralOnReefs = []
@@ -156,24 +196,27 @@ class CoralCamera:
                     copiedReefList[levelIndex][level.index(reefPose)] = 1 if coralInReef else 0
 
         return copiedReefList
+
+    def __reef_looking_index(self, aprilTagIndex: int) -> int:
+        if self.team == "red":
+            return constants.PhotonLibConstants.RED_APRIL_TAG_REEF_LOCATIONS[aprilTagIndex]
     
-    def __reef_looking_index(self, aprilTagIndex: int, team: str = "red"):
-        if team == "blue":
-            return constants.PhotonLibConstants.BLUE_APRIL_TAG_REEF_LOCATIONS.index(aprilTagIndex)
-        
-        elif team == "red":
-            return constants.PhotonLibConstants.RED_APRIL_TAG_REEF_LOCATIONS.index(aprilTagIndex)
-        
-f a rectangle (rect1) is inside of another rectangle (rect2).
+        elif self.team == "blue":
+            return constants.PhotonLibConstants.BLUE_APRIL_TAG_REEF_LOCATIONS[aprilTagIndex]
+
+    def __rect_touching_another_rect(self, rect1: list[TargetCorner], rect2: list[TargetCorner]):
+        """
+        If a rectangle (rect1) is touching another rectangle (rect2).
+
+        Parameters:
+            rect1 (list[TargetCorner]): List of target corners representing the bounding box around an object
+            rect2 (list[TargetCorner]): List of target corners representing the bounding box around an object
         """
 
-        def get_bounds(rect: list[TargetCorner]):
-            xCoords = [corner.x for corner in rect]
-            yCoords = [corner.y for corner in rect]
-            return min(xCoords), max(xCoords), min(yCoords), max(yCoords)
+        def point_inside_rect(point: TargetCorner, rect: list[TargetCorner]):
+            if rect[0].x < point.x and rect[2].x > point.x:
+                if point.y > rect2[0].y and point.y < rect2[2].y:
+                    return True
 
-        rect1_min_x, rect1_max_x, rect1_min_y, rect1_max_y = get_bounds(rect1)
-        rect2_min_x, rect2_max_x, rect2_min_y, rect2_max_y = get_bounds(rect2)
-
-        return (rect1_min_x >= rect2_min_x and rect1_max_x <= rect2_max_x and
-                rect1_min_y >= rect2_min_y and rect1_max_y <= rect2_max_y)
+        pointsInRect = [True if point_inside_rect(point, rect2) else False for point in rect1]
+        return True if any(pointsInRect) else False

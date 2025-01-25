@@ -26,19 +26,19 @@ class PhotonLibConstants():
     ]
 
     POSE3D_REEF_CORAL_POSE = [
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False],
+        [False, False, False, False]
     ]
 
-    RED_APRIL_TAG_REEF_LOCATIONS = [6, 7, 8, 9, 10, 11]
-    BLUE_APRIL_TAG_REEF_LOCATIONS = [17, 18, 19, 20, 21, 22]
+    RED_APRIL_TAG_REEF_LOCATIONS = {6: (0, 1), 7: (2, 3), 8: (4, 5), 9: (6, 7), 10: (8, 9), 11: (10, 11)}
+    BLUE_APRIL_TAG_REEF_LOCATIONS = {17: (0, 1), 18: (2, 3), 19: (4, 5), 20: (6, 7), 21: (8, 9), 22: (10, 11)}
