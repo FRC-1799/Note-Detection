@@ -16,8 +16,8 @@ class AprilTagCamera:
         """
         When initialized, a PhotonCamera will be created, along with a PhotonPoseEstimator if the camera being passed is supposed to detect April Tags.
         
-        Parameters: 
-        cameraName  (str): Name of a camera in String format. Used to find which camera is being used in Photon Vision. 
+        Parameters:
+        cameraName  (str): Name of a camera in String format. Used to find which camera is being used in Photon Vision.
         cameraType (str): Optional Parameter that is what the camera will be doing. If it is detecting April Tags, pass Pose in for it, and leave the parameter blank if it is detecting objects.
         """
 
@@ -69,10 +69,25 @@ class CoralCamera:
     def __init__(self, cameraName):
         self.cameraName = cameraName
         self.camera = PhotonCamera(self.cameraName)
-        self.reef = constants.PhotonLibConstants.POSE3D_REEF_LOCATIONS
+        self.reef = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ]
 
     def get_targets(self):
-        """Gathers the targets located in the camera. In this case"""
+        """
+        Gathers the targets located in the camera. In this case
+        """
 
         photonResult = self.camera.getLatestResult()
         targets = photonResult.getTargets()
@@ -85,32 +100,53 @@ class CoralCamera:
 
             self.targets.append(target.bestCameraToTarget)
     
-    def reefs_with_coral(self, robotPosition: Pose3d, reefs: list):
-        coralPositions = []
+    def reefs_with_coral(self, robotPosition: Pose3d, reefs: list[TargetCorner], corals: list[TargetCorner]):
+        sortedReefs = [] # highest -> lowest
+        coralAndReefs = reefs + corals
+        sortedReefLevels = []
 
+        for reef in reefs:
+            reefRect = reef.getMinAreaRectCorners()
+            for sortedReef in sortedReefs:
+                sortedReefRect = sortedReef.getMinAreaRectCorners()
+                if sortedReefRect[2].y < reefRect[2].y:
+                    sortedReefs.insert(sortedReefs.index(sortedReef), reefRect)
+            
+            # If the lowest sorted reef is still higher than the reef, appened said reef to the end of sortedReefs
+            if sortedReefRect[2].y > reefRect[2].y:
+                sortedReefs.append(reef)
+
+        if len(coralAndReefs) == 6:
+            xpos = 0 # 0 is left, 1 is right
+            ypos = 0 # level 0 is acutally level 2, level 1 is level 3, and level 2 is L4
+            for reefOrCoral in coralAndReefs:
+                reefRect = reefOrCoral.getMinAreaRectCorners()
+                if reefRect[0].x - constants.PhotonLibConstants.REEF_X_TOLERANCE < all([xVal[0].x for xVal in coralAndReefs]):
+                    xpos = 0
+                elif reefRect[1].x + constants.PhotonLibConstants.REEF_X_TOLERANCE > all([xVal[1].x for xVal in coralAndReefs]):
+                    xpos = 1
+
+                if reefRect[0].y - constants.PhotonLibConstants.REEF_Y_TOLERANCE < all([yVal[0].y for yVal in coralAndReefs]):
+                    ypos = 2
+                elif reefRect[2].y + constants.PhotonLibConstants.REEF_Y_TOLERANCE > all([yVal[2].y for yVal in coralAndReefs]):
+                    ypos = 0
+                else:
+                    ypos = 1
+
+                
+                
+
+                
+
+                
         if len(self.targets) > 1:
             for coral in self.targets:
-                for reef in reefs:
+                for reef in sortedReefs:
                     coralRect, reefRect = coral.getMinAreaRectCorners(), reef.getMinAreaRectCorners()
-                    coralBlockingReef = self.__rect_inside_another_rect(reefRect, coralRect) # will occur when the coral is on level 2 or 3
-                    if coralBlockingReef:
-                        for reef in reefs:
-                            if reef.getMinAreaRectCorners()[2].y > coralRect[0].y:
-                                
-
-                # distanceToCoral = self.__area_percent_to_meters(coral.area)
-                # coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
-                # coralPositions.append(coralFieldPosition)
-
-    def coral_field_position_math(self, robotPosition: Pose3d):
-        coralPositions = []
-
-        for coral in self.targets:
-            distanceToCoral = self.__find_coral_pose_math(coral)
-            coralFieldPosition = self.__find_coral_field_pose(distanceToCoral, robotPosition)
-            coralPositions.append(coralFieldPosition)
-
-        return coralPositions
+                    coralOnReef = self.__rect_inside_another_rect(reefRect, coralRect) # might occur when the coral is on level 2 or 3
+                    if coralOnReef:
+                        reefIndex = self.__reef_looking_index()
+                        
 
     def coral_reef_location(self, reefFilledList, coralPositions):
         self.coralOnReefs = []
@@ -125,31 +161,17 @@ class CoralCamera:
                     copiedReefList[levelIndex][level.index(reefPose)] = 1 if coralInReef else 0
 
         return copiedReefList
-
-    def __area_percent_to_meters(self, percentage: float) -> Pose3d:
-        pass
-
-    def __coral_xy_in_reef(self, coralPos: Pose3d) -> bool:
-        pass
     
-    def __find_coral_pose_math(self, coral: tuple[int, int]) -> Pose3d:
-        coralX, coralY = coral[0], coral[1]
-
-        y_distance = - self.__mount_height / math.tan(coralY * self._vert_angle_per_pixel - (self.__vert_fov_angle_rad/2) - self.__mount_angle_rad)
-        y_dist_hyp = math.sqrt(self.__mount_height**2 + y_distance**2)
-        x_distance = y_dist_hyp * math.tan(coralX * self._horiz_angle_per_pixel - (self.__horiz_fov_angle_rad/2))
-        return (x_distance, y_distance)
-
-    def __find_coral_field_pose(self, distanceToCoral: Pose3d, robotPosition: Pose3d) -> Translation3d:
-        translationOfCoralPose = distanceToCoral.translation()
-        translationOfRobotPose = robotPosition.translation()
-        coralFieldPosition = translationOfCoralPose + translationOfRobotPose
-        return coralFieldPosition
-    
-    def __rect_inside_another_rect(self, rect1: list[TargetCorner], rect2: list[TargetCorner]) -> bool:
+    def __reef_looking_index(self, aprilTagIndex: int, team: str = "red"):
+        if team == "blue":
+            return constants.PhotonLibConstants.BLUE_APRIL_TAG_REEF_LOCATIONS.index(aprilTagIndex)
+        
+        elif team == "red":
+            return constants.PhotonLibConstants.RED_APRIL_TAG_REEF_LOCATIONS.index(aprilTagIndex)
+        
+f a rectangle (rect1) is inside of another rectangle (rect2).
         """
-        Checks if a rectangle (rect1) is inside of another rectangle (rect2).
-        """
+
         def get_bounds(rect: list[TargetCorner]):
             xCoords = [corner.x for corner in rect]
             yCoords = [corner.y for corner in rect]
