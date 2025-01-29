@@ -2,7 +2,7 @@ import time
 import ntcore
 import cv2
 from constants import PhotonLibConstants
-from classes import AprilTagCamera
+from classes import *
 import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d
 import keyboard
@@ -19,6 +19,9 @@ publisher = topic.getEntry("Pose3d")
 
 # Create an instance of the AprilTag camera
 grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
+coralCamera = CoralCamera(constants.PhotonLibConstants.CORAL_CAMERA_NAME, "red")
+#reefCamera = CoralCamera(constants.PhotonLibConstants.REEF_CAMERA_NAME, "red")
+coralCalculator = CoralCalculator("red")
 
 def fetch_robot_position() -> Pose3d:
     """
@@ -35,14 +38,16 @@ def main():
     running = True
     while running:
         # Get tags from the camera (or any other data you need)
-        targets = grabAprilTagInformation.get_tags()
+        aprilTags = grabAprilTagInformation.get_tags()
+        corals = coralCamera.get_targets()
+        #reefs = reefCamera.get_targets()
 
         if keyboard.is_pressed("q"):
             inst.stopServer()
             cv2.destroyAllWindows()
             break
-        
-        if targets:
+        #print(aprilTags)
+        if aprilTags:
             robot_position_process = multiprocessing.Process(target=fetch_robot_position)
             
             robot_position_process.start()
@@ -51,6 +56,13 @@ def main():
         
             if position:
                 publisher.set(position.estimatedPose)
+        print(corals)
+        if corals:
+            for tag in aprilTags:
+                if tag.fiducialId in constants.PhotonLibConstants.RED_APRIL_TAG_REEF_LOCATIONS.keys():
+                    print(coralCalculator.reefs_with_coral(tag.fiducialId, corals, corals))
+
+            
 
         
 

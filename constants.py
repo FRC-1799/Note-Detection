@@ -1,11 +1,12 @@
 from wpimath.geometry import Transform3d, Rotation3d, Translation2d, Rotation2d, Pose3d
 
 class PhotonLibConstants():
-    APRIL_TAG_CAMERA_NAME = "Arducam1"
-    NOTE_CAMERA_NAME = "USB_Camera"
+    APRIL_TAG_CAMERA_NAME = "ArducamAprilTag"
+    CORAL_CAMERA_NAME = "ArducamCoral"
+    REEF_CAMERA_NAME = "ArducamReef"
     ROBOT_TO_CAMERA_TRANSFORMATION = Transform3d(-0.3164, 0, 0.1472, Rotation3d(0, 45, 0)) # Placeholder, fix this when robot is cadded
-    POSE_AMBIGUITY_TOLERANCE = 0.2
-    REEF_WIDTH = 0.25   
+    POSE_AMBIGUITY_TOLERANCE = 0
+    REEF_WIDTH = 0.25
     REEF_HEIGHT = 0.25  
     REEF_X_TOLERANCE = 0.5
     REEF_Y_TOLERANCE = 1

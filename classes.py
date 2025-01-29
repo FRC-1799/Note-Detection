@@ -78,20 +78,42 @@ class CoralCamera:
 
         photonResult = self.camera.getLatestResult()
         targets = photonResult.getTargets()
+        #print(targets)
 
         self.targets = []
         for target in targets:
+            print("jehu")
             # Skip target if its pose is too ambiguous
             if target.poseAmbiguity > constants.PhotonLibConstants.POSE_AMBIGUITY_TOLERANCE:
                 continue
 
             self.targets.append(target.bestCameraToTarget)
 
-    def reefs_with_coral(self, aprilTagIndex: int, reefs: list[TargetCorner], corals: list[TargetCorner], reef: list):
-        reefCopy = reef
-        sortedReefs = [] # highest -> lowest
+        return self.targets
 
-        sortedReefLevels = []
+
+    def coral_reef_location(self, reefFilledList, coralPositions):
+        self.coralOnReefs = []
+        copiedReefList = reefFilledList
+
+        for coralPose in coralPositions:
+            if not self.__coral_xy_in_reef(coralPose):
+                return None
+            for levelIndex, level in enumerate(self.reef):
+                for reefPose in level:
+                    coralInReef = True if coralPose.X() > reefPose.X() and coralPose.X() < reefPose.X() + constants.PhotonLibConstants.REEF_WIDTH and coralPose.Y() > reefPose.Y() and coralPose.Y() < reefPose.Y() + reefPose.Y() + constants.PhotonLibConstants.REEF_WIDTH and coralPose.Z() > reefPose.Z() and coralPose.Z() < reefPose.Z() + reefPose.Z() + constants.PhotonLibConstants.REEF_HEIGHT else False
+                    copiedReefList[levelIndex][level.index(reefPose)] = 1 if coralInReef else 0
+
+        return copiedReefList
+
+    
+
+class CoralCalculator:
+    def __init__(self, team):
+        self.team = team
+
+    def reefs_with_coral(self, aprilTagIndex: int, reefs: list[TargetCorner], corals: list[TargetCorner]):
+        
 
         # for reef in reefs:
         #     reefRect = reef.getMinAreaRectCorners()
@@ -105,9 +127,10 @@ class CoralCamera:
         #         sortedReefs.append(reef)
 
         coralAndReefs = []
+        reefCopy = reef
 
-        for coral in self.targets:
-            for reef in sortedReefs:
+        for coral in corals:
+            for reef in reefs:
                 # Makes a list of the corals and the reefs
                 coralRect, reefRect = coral.getMinAreaRectCorners(), reef.getMinAreaRectCorners()
                 coralOnReef = self.__rect_touching_another_rect(reefRect, coralRect)
@@ -134,6 +157,8 @@ class CoralCamera:
         coralPositions = []
         xpos = None # 0 is left, 1 is right
         ypos = None # level 2 is level 2
+
+        # Takes of each of the positions of the coral and appends them to coralPositions
         for reefOrCoral in coralAndReefs:
             reefRect = reefOrCoral.getMinAreaRectCorners()
             coralAndReefs.remove(reefOrCoral) # we dont want to check this value, as reflexive property
@@ -181,29 +206,14 @@ class CoralCamera:
             reefCopy[reefIndex[xyPos[0]]][xyPos[1]] = True
 
         return reefCopy
-
-
-    def coral_reef_location(self, reefFilledList, coralPositions):
-        self.coralOnReefs = []
-        copiedReefList = reefFilledList
-
-        for coralPose in coralPositions:
-            if not self.__coral_xy_in_reef(coralPose):
-                return None
-            for levelIndex, level in enumerate(self.reef):
-                for reefPose in level:
-                    coralInReef = True if coralPose.X() > reefPose.X() and coralPose.X() < reefPose.X() + constants.PhotonLibConstants.REEF_WIDTH and coralPose.Y() > reefPose.Y() and coralPose.Y() < reefPose.Y() + reefPose.Y() + constants.PhotonLibConstants.REEF_WIDTH and coralPose.Z() > reefPose.Z() and coralPose.Z() < reefPose.Z() + reefPose.Z() + constants.PhotonLibConstants.REEF_HEIGHT else False
-                    copiedReefList[levelIndex][level.index(reefPose)] = 1 if coralInReef else 0
-
-        return copiedReefList
-
+    
     def __reef_looking_index(self, aprilTagIndex: int) -> int:
         if self.team == "red":
             return constants.PhotonLibConstants.RED_APRIL_TAG_REEF_LOCATIONS[aprilTagIndex]
     
         elif self.team == "blue":
             return constants.PhotonLibConstants.BLUE_APRIL_TAG_REEF_LOCATIONS[aprilTagIndex]
-
+        
     def __rect_touching_another_rect(self, rect1: list[TargetCorner], rect2: list[TargetCorner]):
         """
         If a rectangle (rect1) is touching another rectangle (rect2).
