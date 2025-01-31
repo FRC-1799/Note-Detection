@@ -14,14 +14,18 @@ inst.stopServer()
 inst.setServerTeam(1799)
 inst.startServer()
 
-topic = inst.getStructTopic("RobotValues", Pose3d)
-publisher = topic.getEntry("Pose3d")
+robotPoseTopic = inst.getStructTopic("RobotValues", Pose3d)
+robotPosePublisher = robotPoseTopic.getEntry("Pose3d")
+reefTopic = inst.getBooleanArrayTopic("ReefValues", bool)
+reefPublisher = reefTopic.getEntry("Reef")
+
+team = str(input("Team: "))
 
 # Create an instance of the AprilTag camera
 grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
-coralCamera = CoralCamera(constants.PhotonLibConstants.CORAL_CAMERA_NAME, "red")
-#reefCamera = CoralCamera(constants.PhotonLibConstants.REEF_CAMERA_NAME, "red")
-coralCalculator = CoralCalculator("red")
+coralCamera = CoralCamera(constants.PhotonLibConstants.CORAL_CAMERA_NAME, team)
+reefCamera = CoralCamera(constants.PhotonLibConstants.REEF_CAMERA_NAME, team)
+coralCalculator = CoralCalculator(team)
 
 def fetch_robot_position() -> Pose3d:
     """
@@ -40,13 +44,13 @@ def main():
         # Get tags from the camera (or any other data you need)
         aprilTags = grabAprilTagInformation.get_tags()
         corals = coralCamera.get_targets()
-        #reefs = reefCamera.get_targets()
+        reefs = reefCamera.get_targets()
 
         if keyboard.is_pressed("q"):
             inst.stopServer()
             cv2.destroyAllWindows()
             break
-        #print(aprilTags)
+
         if aprilTags:
             robot_position_process = multiprocessing.Process(target=fetch_robot_position)
             
@@ -55,12 +59,14 @@ def main():
             position = fetch_robot_position()
         
             if position:
-                publisher.set(position.estimatedPose)
-        print(corals)
-        if corals:
+                robotPosePublisher.set(position.estimatedPose)
+
+        if (corals or reefs) and aprilTags:
             for tag in aprilTags:
                 if tag.fiducialId in constants.PhotonLibConstants.RED_APRIL_TAG_REEF_LOCATIONS.keys():
-                    print(coralCalculator.reefs_with_coral(tag.fiducialId, corals, corals))
+                    filledReef = coralCalculator.reefs_with_coral(tag.fiducialId, reefs, corals)
+                    reefPublisher.set(filledReef)
+                    
 
             
 
