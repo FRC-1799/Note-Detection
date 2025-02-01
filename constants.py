@@ -26,20 +26,5 @@ class PhotonLibConstants():
         [Pose3d(4.2, 3.25, 0.45, Rotation3d()), Pose3d(4.2, 3.25, 0.8, Rotation3d()), Pose3d(4.2, 3.25, 1.2, Rotation3d()), Pose3d(4.2, 3.25, 1.825498, Rotation3d())],
     ]
 
-    POSE3D_REEF_CORAL_POSE = [
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, False, False]
-    ]
-
     RED_APRIL_TAG_REEF_LOCATIONS = {6: (0, 1), 7: (2, 3), 8: (4, 5), 9: (6, 7), 10: (8, 9), 11: (10, 11)}
     BLUE_APRIL_TAG_REEF_LOCATIONS = {17: (0, 1), 18: (2, 3), 19: (4, 5), 20: (6, 7), 21: (8, 9), 22: (10, 11)}
