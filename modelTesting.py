@@ -9,8 +9,8 @@ model_path = "runs/detect/train/weights/best.pt"  # Replace with the actual path
 model = YOLO(model_path)  # Load YOLOv8 model (Ultralytics)
 
 # Open video file
-video_path = "testvid.mp4"  # Replace with the actual path to your video file
-cap = cv2.VideoCapture(video_path)
+video_path = "0"  # Replace with the actual path to your video file
+cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
     ret, frame = cap.read()
