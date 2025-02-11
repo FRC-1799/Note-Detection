@@ -1,25 +1,23 @@
-from wpimath.geometry import Pose3d, Rotation3d
+from wpimath.geometry import Pose3d, Rotation3d, Transform3d
 import math
 @DeprecationWarning
 class vector:
     
     def __init__ (self, x: float, y:float, z:float, pitch:float, yaw: float, NumbersInRad=True):
-        self.x, self.y, self.z = x, y, x
-        self.pitch, self.yaw = pitch, yaw
+
         if NumbersInRad:
-            self.xRat = math.sin(yaw)
-            self.yRat = math.cos(yaw)
-            self.zRat = math.tan(pitch)
+            self.pose = Pose3d(x, y, z, Rotation3d(0, pitch, yaw))
 
         else:
-            self.xRat = math.sin(math.degrees(yaw))
-            self.yRat = math.cos(math.degrees(yaw))
-            self.zRat = math.tan(math.degrees(pitch))
+            self.pose = Pose3d(x, y, z, Rotation3d(0, math.degrees(pitch), (math.degrees(yaw))))
 
+    def __init__(self, pose:Pose3d):
+        self.pose=pose
+    
 
     """
         returns the pose of this vector when extended to the given length
     """
     def getPoseAtStep(self, lenght:float)->Pose3d:
-        return Pose3d(lenght*self.xRat+self.x, lenght*self.yRat+self.y, lenght*self.zRat+self.z, Rotation3d())
+        return self.transformBy(Transform3d(lenght, 0, 0, Rotation3d()))
     
