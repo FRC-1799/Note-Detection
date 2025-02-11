@@ -1,5 +1,6 @@
 from wpimath.geometry import Pose3d, Rotation3d
 import math
+@DeprecationWarning
 class vector:
     
     def __init__ (self, x: float, y:float, z:float, pitch:float, yaw: float, NumbersInRad=True):

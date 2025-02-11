@@ -11,7 +11,7 @@ class hitbox:
     
 
     def colides(self, x:float, y:float, z:float)->bool:
-        return (self.x-x)**2 + (self.y-y)**2 + (self.z -z)**2 <= self.r**2
+        return (x-self.x)**2 + (y-self.y)**2 + (z-self.z)**2 <= self.r**2
     
     def colides(self, pose:Pose3d)->bool:
         return self.colides(pose.X(), pose.Y(), pose.Z())
