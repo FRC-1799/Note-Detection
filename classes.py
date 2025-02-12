@@ -27,7 +27,7 @@ class AprilTagCamera:
             apriltag.loadAprilTagLayoutField(apriltag.AprilTagField.k2024Crescendo),
             PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             self.camera,
-            constants.PhotonLibConstants.ROBOT_TO_CAMERA_TRANSFORMATION,
+            constants.CameraConstants.ROBOT_TO_CAMERA_TRANSFORMATION,
         )
 
         self.estimator.multiTagFallbackStrategy = PoseStrategy.LOWEST_AMBIGUITY
