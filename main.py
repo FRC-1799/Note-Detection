@@ -9,6 +9,7 @@ import keyboard
 import FieldMirroringUtils
 import hitbox
 import camera
+from ntcore import BooleanArraySubscriber
 
 
 def hitbox_maker():
@@ -132,6 +133,11 @@ def fetch_robot_position() -> Pose3d:
     position = grabAprilTagInformation.get_estimated_global_pose()
     return position
 
+def grab_past_reef(levelSubscribers: list[BooleanArraySubscriber, BooleanArraySubscriber, BooleanArraySubscriber, BooleanArraySubscriber]):
+    defaultValue = [False for _ in range(4)]
+    reef = [booleanList.get(defaultValue) for booleanList in levelSubscribers]
+    return reef
+
 def main():
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
@@ -139,10 +145,21 @@ def main():
     inst.setServerTeam(1799)
     inst.startServer()
 
+    # Reef Values
+    reef = [[False for _ in range(4)] for _ in range(12)]
+
     # Grabs each of the topics for Network Tables
-    robotPoseTopic = inst.getStructTopic("RobotValues", Pose3d)
+    robotPoseTopic = inst.getStructTopic("RobotPose", Pose3d)
     robotPosePublisher = robotPoseTopic.getEntry("Pose3d")
-    #reefTopic = inst.getBooleanArrayTopic("ReefValues", bool)
+
+    reefL1 = inst.getBooleanArrayTopic("ReefL1", bool)
+    reefL2 = inst.getBooleanArrayTopic("ReefL2", bool)
+    reefL3 = inst.getBooleanArrayTopic("ReefL3", bool)
+    reefL4 = inst.getBooleanArrayTopic("ReefL4", bool)
+    reefEntrysList = [reefL1, reefL2, reefL3, reefL4]
+
+    reefSubscribers = [level.subscribe() for level in reefEntrysList]
+    reefPublishers = [level.publish() for level in reefEntrysList]
 
     team = str(input("Team: "))
 
@@ -153,8 +170,8 @@ def main():
 
     hitboxes = hitbox_maker()
 
-    # Reef Values
-    reef = [[False for _ in range(4)] for _ in range(12)]
+    
+    
 
     running = True
     while running:
@@ -174,9 +191,13 @@ def main():
             position = fetch_robot_position()
         
             if position:
-                robotPosePublisher.set(position.estimatedPose)
+                robotPosePublisher.set(position.estimatedPose, )
 
+        reef = grab_past_reef(reefSubscribers)
         coralCamera.camera_loop(reef, hitboxes)
+        for level in reef:
+            for publisher in reefPublishers:
+                publisher.set(level)
 
 if __name__ == "__main__":
     main()
