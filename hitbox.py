@@ -10,8 +10,10 @@ class hitbox:
         return hitbox(pose.X(), pose.Y(), pose.Z(), r)
     
 
-    def colides(self, x:float, y:float, z:float)->bool:
-        return (x-self.x)**2 + (y-self.y)**2 + (z-self.z)**2 <= self.r**2
+    def colideXYZ(self, pointOnRay: tuple[float, float, float])->bool:
+        pointX, pointY, pointZ = pointOnRay
+        return (pointX-self.x)**2 + (pointY-self.y)**2 + (pointZ-self.z)**2 <= self.r**2
     
-    def colides(self, pose:Pose3d)->bool:
-        return self.colides(pose.X(), pose.Y(), pose.Z())
+    def colidePose3d(self, pose:Pose3d)->bool:
+        pointLocation = (pose.X(), pose.Y(), pose.Z())
+        return self.colides(pointLocation)
