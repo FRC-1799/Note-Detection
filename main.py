@@ -4,6 +4,7 @@ import cv2
 from constants import PhotonLibConstants, CameraConstants
 from classes import *
 import multiprocessing
+from wpimath.units import meters
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
 import FieldMirroringUtils
@@ -11,6 +12,8 @@ import hitbox
 import camera
 from ntcore import BooleanArraySubscriber
 
+def addTranslation2ds(translation1: Translation2d, translation2: Translation2d):
+    return Translation2d(translation1.X() + translation2.X(), translation1.Y() + translation2.Y())
 
 def hitbox_maker():
     origin = Translation2d(FieldMirroringUtils.FIELD_WIDTH / 2, FieldMirroringUtils.FIELD_HEIGHT / 2);
@@ -18,18 +21,18 @@ def hitbox_maker():
     blueHitboxes, redHitboxes = [[] for _ in range(12)], [[] for _ in range(12)]
 
     branchesCenterPositionBlue = [
-        Translation2d(-4.810, 0.164).__add__(origin),  # A
-        Translation2d(-4.810, -0.164).__add__(origin),  # B
-        Translation2d(-4.690, -0.373).__add__(origin),  # C
-        Translation2d(-4.406, -0.538).__add__(origin),  # D
-        Translation2d(-4.164, -0.537).__add__(origin),  # E
-        Translation2d(-3.879, -0.374).__add__(origin),  # F
-        Translation2d(-3.759, -0.164).__add__(origin),  # G
-        Translation2d(-3.759, 0.164).__add__(origin),   # H
-        Translation2d(-3.880, 0.373).__add__(origin),  # I
-        Translation2d(-4.164, 0.538).__add__(origin),  # J
-        Translation2d(-4.405, 0.538).__add__(origin),  # K
-        Translation2d(-4.690, 0.374).__add__(origin)   # L
+        addTranslation2ds(Translation2d(-4.810, 0.164), origin),  # A
+        addTranslation2ds(Translation2d(-4.810, -0.164), origin),  # B
+        addTranslation2ds(Translation2d(-4.690, -0.373), origin),  # C
+        addTranslation2ds(Translation2d(-4.406, -0.538), origin),  # D
+        addTranslation2ds(Translation2d(-4.164, -0.537), origin),  # E
+        addTranslation2ds(Translation2d(-3.879, -0.374), origin),  # F
+        addTranslation2ds(Translation2d(-3.759, -0.164), origin),  # G
+        addTranslation2ds(Translation2d(-3.759, 0.164), origin),   # H
+        addTranslation2ds(Translation2d(-3.880, 0.373), origin),  # I
+        addTranslation2ds(Translation2d(-4.164, 0.538), origin),  # J
+        addTranslation2ds(Translation2d(-4.405, 0.538), origin),  # K
+        addTranslation2ds(Translation2d(-4.690, 0.374), origin)   # L
     ]
 
     branchesCenterPositionRed = [FieldMirroringUtils.flip(pos) for pos in branchesCenterPositionBlue]
@@ -54,7 +57,7 @@ def hitbox_maker():
         def __init__(self, ideal_placement_position: Translation2d, facing_outwards: Rotation2d, height_meters: float, branch_inwards_direction_pitch_rad: float):
             self.ideal_coral_placement_pose = Pose3d(
                 ideal_placement_position.x, ideal_placement_position.y, height_meters,
-                Rotation3d(0, -branch_inwards_direction_pitch_rad, facing_outwards.__add__(Rotation2d(Rotation2d.k180deg)).radians)
+                Rotation3d(0, -branch_inwards_direction_pitch_rad, facing_outwards, (Rotation2d(Rotation2d.k180deg)).radians)
             )
             self.ideal_velocity_direction_pitch_to_score_rad = branch_inwards_direction_pitch_rad
             self.has_coral = False
@@ -64,9 +67,9 @@ def hitbox_maker():
         L1, with its outward facing direction and position
         """
         def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
-            coral_rotation = Rotation3d(0, 0, outwards_facing.__add__(Rotation2d.kCCW_90deg).radians)
-            first_position = center_position.__add__(Translation2d(0.08, outwards_facing))
-            second_position = center_position.__add__(Translation2d(-0.04, outwards_facing))
+            coral_rotation = Rotation3d(0, 0, outwards_facing, (Rotation2d(math.pi / (2 * math.ra))).radians)
+            first_position = center_position, (Translation2d(0.08, outwards_facing))
+            second_position = center_position, (Translation2d(-0.04, outwards_facing))
             self.first_placement_pose = Pose3d(first_position.get_x(), first_position.get_y(), 0.48, coral_rotation)
             self.second_placement_pose = Pose3d(second_position.get_x(), second_position.get_y(), 0.52, coral_rotation)
             self.ideal_placement_position = Translation3d(center_position.get_x(), center_position.get_y(), 0.47)
@@ -80,27 +83,29 @@ def hitbox_maker():
 
             # L1 trough, 15cm away from center
             self.L1 = ReefscapeReefTrough(
-                stick_center_position_on_field.__add__(Translation2d(0.15, facing_outwards.radians)),
+                addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
                 facing_outwards
             )
 
             # L2 stick, 20 cm away from center, 78cm above ground, 35 deg pitch
             self.L2 = ReefscapeReefBranch(
-                stick_center_position_on_field.__add__(Translation2d(0.2, facing_outwards.radians)),
+                addTranslation2ds(stick_center_position_on_field, Translation2d(0.2, facing_outwards.radians())),
                 facing_outwards, 0.77, math.radians(-35)
             )
 
             # L3 stick, 20 cm away from center, 118cm above ground, 35 deg pitch
             self.L3 = ReefscapeReefBranch(
-                stick_center_position_on_field.__add__(Translation2d(0.2, facing_outwards.radians)),
+                addTranslation2ds(stick_center_position_on_field, Translation2d(0.2, facing_outwards.radians())),
                 facing_outwards, 1.17, math.radians(-35)
             )
 
             # L4 stick, 30 cm away from center, 178cm above ground, vertical
             self.L4 = ReefscapeReefBranch(
-                stick_center_position_on_field.__add__(Translation2d(0.26, facing_outwards.radians)),
+                addTranslation2ds(stick_center_position_on_field, Translation2d(0.26, facing_outwards.radians())),
                 facing_outwards, 1.78, math.radians(-90)
             )
+
+        
 
     # Makes hitboxes out of the blue and branches and adds them to the list
     for i in range(12):
@@ -130,8 +135,8 @@ def fetch_robot_position() -> Pose3d:
     Pose3d[Transform3d, Rotation3d]: 3d position made up of the robot's position (x, y, z) and its rotation (roll, pitch, yaw)
     """
 
-    position = grabAprilTagInformation.get_estimated_global_pose()
-    return position
+    position, timestamp = grabAprilTagInformation.get_estimated_global_pose()
+    return position, timestamp
 
 def grab_past_reef(levelSubscribers: list[BooleanArraySubscriber, BooleanArraySubscriber, BooleanArraySubscriber, BooleanArraySubscriber]):
     defaultValue = [False for _ in range(4)]
@@ -152,16 +157,16 @@ def main():
     robotPoseTopic = inst.getStructTopic("RobotPose", Pose3d)
     robotPosePublisher = robotPoseTopic.getEntry("Pose3d")
 
-    reefL1 = inst.getBooleanArrayTopic("ReefL1", bool)
-    reefL2 = inst.getBooleanArrayTopic("ReefL2", bool)
-    reefL3 = inst.getBooleanArrayTopic("ReefL3", bool)
-    reefL4 = inst.getBooleanArrayTopic("ReefL4", bool)
+    reefL1 = inst.getBooleanArrayTopic("ReefL1")
+    reefL2 = inst.getBooleanArrayTopic("ReefL2")
+    reefL3 = inst.getBooleanArrayTopic("ReefL3")
+    reefL4 = inst.getBooleanArrayTopic("ReefL4")
     reefEntrysList = [reefL1, reefL2, reefL3, reefL4]
 
-    reefSubscribers = [level.subscribe() for level in reefEntrysList]
+    reefSubscribers = [level.subscribe(reef[0]) for level in reefEntrysList]
     reefPublishers = [level.publish() for level in reefEntrysList]
 
-    team = str(input("Team: "))
+    team = "blue"
 
     # Create an instance of the AprilTag camera
     grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
@@ -188,10 +193,10 @@ def main():
             
             robot_position_process.start()
             robot_position_process.join()
-            position = fetch_robot_position()
+            position, timestamp = fetch_robot_position()
         
             if position:
-                robotPosePublisher.set(position.estimatedPose, )
+                robotPosePublisher.set(position.estimatedPose, timestamp)
 
         reef = grab_past_reef(reefSubscribers)
         coralCamera.camera_loop(reef, hitboxes)

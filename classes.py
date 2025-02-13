@@ -33,12 +33,13 @@ class AprilTagCamera:
         self.estimator.multiTagFallbackStrategy = PoseStrategy.LOWEST_AMBIGUITY
 
     def get_estimated_global_pose(self) -> Optional[EstimatedRobotPose]:
-        return self.estimator.update()
+        result = self.estimator.update()
+        return result, result.timestampSeconds
 
     def get_estimated_global_pose_2d(self) -> Optional[Pose2d]:
         result = self.estimator.update()
         if result:
-            return result.estimatedPose.toPose2d()
+            return result.estimatedPose.toPose2d(), result.timestampSeconds
 
 
     def get_tags(self) -> dict[int, Transform3d]:

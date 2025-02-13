@@ -9,7 +9,7 @@ FIELD_HEIGHT = 8.21
 SPEAKER_POSE_BLUE = Translation3d(0.1, 5.55, 2.2)
 
 def flip(rotation: Rotation2d):
-    return rotation.__add__(Rotation2d(math.pi))
+    return rotation.__add__(Rotation2d(math.radians(math.pi)))
 
 def to_current_alliance_rotation(rotation_at_blue_side: Rotation2d) -> Rotation2d:
     y_axis = Rotation2d.from_degrees(90)
