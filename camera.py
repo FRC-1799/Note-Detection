@@ -1,7 +1,8 @@
 from constants import CameraConstants
 import cv2
 from ultralytics import YOLO 
-from vector import vector
+import math
+import vector
 
 
 class CoralCamera:
@@ -14,7 +15,7 @@ class CoralCamera:
         self.screenHeight = CameraConstants.verticalPixels
         self.camera = cv2.VideoCapture(cameraIndex)
 
-    def camera_loop(self, reef: list, reefHitboxes: list):
+    def camera_loop(self, reef: list[list[bool]], reefHitboxes: list):
         ret, frame = self.camera.read()
         if ret:
             frame = cv2.resize(frame, (self.screenWidth, self.screenHeight)) 
@@ -25,7 +26,6 @@ class CoralCamera:
                 for box in result.boxes:
                     conf = box.conf[0].item()
                     if conf > CameraConstants.confidenceTolerance:
-                        # Coral's top left x, top right y, bottom right x, and bottom right y position
                         x1, y1, x2, y2 = map(int, box.xyxy[0])
                         cls = int(box.cls[0].item())
 
@@ -36,22 +36,27 @@ class CoralCamera:
                         centerPitch = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
                         centerYaw = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
 
-                        # Adjusted so that (0, 0) is the middle of the screen, instead of it being the top left corner
                         coralPitch = coralPitch - centerPitch
                         coralYaw = -(coralYaw - centerYaw)
 
-                        vector = vector(CameraConstants.cameraPosition, coralPitch, coralYaw) # draws the vector
+                        vectorOfCoral = vector.vector(CameraConstants.cameraPosition, coralPitch, coralYaw)
 
-                        
-                        for increment in range(1, CameraConstants.vectorLengthToExtend, 1): # increase by the lenght by an increment
-                            positionLocation = vector.getPoseAtStep(increment)
+                        for increment in range(1, CameraConstants.vectorLengthToExtend, 1):
+                            positionLocation = vectorOfCoral.getPoseAtStep(increment)
+                            
                             for reefSection in reefHitboxes:
                                 for hitbox in reefSection:
-                                    if hitbox.colidePose3d(positionLocation): # check if the point is inside of the reef's hitbox
+                                    print(positionLocation)
+                                    if hitbox.colidePose3d(positionLocation):
+                                        #print(len(reef), len(reefHitboxes))
                                         reef[reefHitboxes.index(reefSection)][reefSection.index(hitbox)] = True
-                                    
-                        label = f"{self.model.names[cls]}: {round(self.math.degrees(coralPitch), 2), round(self.math.degrees(coralYaw), 2)}"  
-                        
-                        # Draw rectangle and label
+                                        print(reef)
+                                            
+
+                        label = f"{self.model.names[cls]}: {round(math.degrees(coralPitch), 2), round(math.degrees(coralYaw), 2)}"
+
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            cv2.imshow('heheh', frame)
+            cv2.waitKey(1)  # Ensures OpenCV window updates properly

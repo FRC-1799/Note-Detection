@@ -1,6 +1,5 @@
 from wpimath.geometry import Pose3d, Rotation3d, Transform3d
 import math
-@DeprecationWarning
 class vector:
     def __init__(self, cameraPosition: tuple[float, float, float], pitch:float, yaw: float, NumbersInRad=True):
         self.self = self
@@ -19,5 +18,5 @@ class vector:
         """
         Returns the pose of this vector when extended to the given length
         """
-        return self.transformBy(Transform3d(lenght, 0, 0, Rotation3d()))
+        return self.pose.transformBy(Transform3d(lenght, 0, 0, Rotation3d()))
     

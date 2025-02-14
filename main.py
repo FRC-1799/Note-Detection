@@ -1,17 +1,20 @@
 import time
 import ntcore
 import cv2
+import wpimath
 from constants import PhotonLibConstants, CameraConstants
 from classes import *
 import multiprocessing
-from wpimath.units import meters
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
 import FieldMirroringUtils
 import hitbox
 import camera
 from ntcore import BooleanArraySubscriber
+from wpimath.units import degreesToRadians
 
+
+team = "blue"
 def addTranslation2ds(translation1: Translation2d, translation2: Translation2d):
     return Translation2d(translation1.X() + translation2.X(), translation1.Y() + translation2.Y())
 
@@ -35,7 +38,7 @@ def hitbox_maker():
         addTranslation2ds(Translation2d(-4.690, 0.374), origin)   # L
     ]
 
-    branchesCenterPositionRed = [FieldMirroringUtils.flip(pos) for pos in branchesCenterPositionBlue]
+    branchesCenterPositionRed = [FieldMirroringUtils.flipTranslation2d(pos) for pos in branchesCenterPositionBlue]
 
     branchesFacingOutwardsBlue = [
         Rotation2d.fromDegrees(180), Rotation2d.fromDegrees(180), # A and B
@@ -46,7 +49,7 @@ def hitbox_maker():
         Rotation2d.fromDegrees(120), Rotation2d.fromDegrees(120), # K and L
     ]
 
-    branchesFacingOutwardsRed = [FieldMirroringUtils.flip(pos) for pos in branchesFacingOutwardsBlue]
+    branchesFacingOutwardsRed = [FieldMirroringUtils.flipRotation2d(pos) for pos in branchesFacingOutwardsBlue]
 
     
 
@@ -57,8 +60,9 @@ def hitbox_maker():
         def __init__(self, ideal_placement_position: Translation2d, facing_outwards: Rotation2d, height_meters: float, branch_inwards_direction_pitch_rad: float):
             self.ideal_coral_placement_pose = Pose3d(
                 ideal_placement_position.x, ideal_placement_position.y, height_meters,
-                Rotation3d(0, -branch_inwards_direction_pitch_rad, facing_outwards, (Rotation2d(Rotation2d.k180deg)).radians)
+                Rotation3d(degreesToRadians(0), -branch_inwards_direction_pitch_rad, facing_outwards.rotateBy(Rotation2d(math.radians(180))).radians())
             )
+            
             self.ideal_velocity_direction_pitch_to_score_rad = branch_inwards_direction_pitch_rad
             self.has_coral = False
 
@@ -67,12 +71,14 @@ def hitbox_maker():
         L1, with its outward facing direction and position
         """
         def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
-            coral_rotation = Rotation3d(0, 0, outwards_facing, (Rotation2d(math.pi / (2 * math.ra))).radians)
+            #coral_rotation = Rotation3d(0, 0, addTranslation2ds(outwards_facing, Rotation2d(math.radians(90))))
+            roll, pitch, yaw = degreesToRadians(0), degreesToRadians(0), outwards_facing.rotateBy(Rotation2d((math.radians(90)))).radians()
+            coral_rotation = Rotation3d(roll, pitch, yaw)
             first_position = center_position, (Translation2d(0.08, outwards_facing))
             second_position = center_position, (Translation2d(-0.04, outwards_facing))
-            self.first_placement_pose = Pose3d(first_position.get_x(), first_position.get_y(), 0.48, coral_rotation)
-            self.second_placement_pose = Pose3d(second_position.get_x(), second_position.get_y(), 0.52, coral_rotation)
-            self.ideal_placement_position = Translation3d(center_position.get_x(), center_position.get_y(), 0.47)
+            self.first_placement_pose = Pose3d(first_position[1].X(), first_position[1].Y(), 0.48, coral_rotation)
+            self.second_placement_pose = Pose3d(second_position[1].X(), second_position[1].Y(), 0.52, coral_rotation)
+            self.ideal_coral_placement_pose = Translation3d(first_position[0].X(), first_position[0].Y(), 0.47)
             self.coral_count = 0
 
     class ReefscapeReefBranchesTower:
@@ -114,14 +120,14 @@ def hitbox_maker():
         branchL2Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CameraConstants.radius)
         branchL3Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CameraConstants.radius)
         branchL4Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CameraConstants.radius)
-        blueHitboxes[i].append(branchL1Hitbox, branchL2Hitbox, branchL3Hitbox, branchL4Hitbox)
+        blueHitboxes[i].extend([branchL1Hitbox, branchL2Hitbox, branchL3Hitbox, branchL4Hitbox])
         
         branch = ReefscapeReefBranchesTower(branchesCenterPositionRed[i], branchesFacingOutwardsRed[i])
         branchL1Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L1.ideal_coral_placement_pose, CameraConstants.radius)
         branchL2Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CameraConstants.radius)
         branchL3Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CameraConstants.radius)
         branchL4Hitbox = hitbox.hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CameraConstants.radius)
-        redHitboxes[i].append(branchL1Hitbox, branchL2Hitbox, branchL3Hitbox, branchL4Hitbox)
+        redHitboxes[i].extend([branchL1Hitbox, branchL2Hitbox, branchL3Hitbox, branchL4Hitbox])
 
     return blueHitboxes if team == "blue" else redHitboxes
 
@@ -138,9 +144,14 @@ def fetch_robot_position() -> Pose3d:
     position, timestamp = grabAprilTagInformation.get_estimated_global_pose()
     return position, timestamp
 
-def grab_past_reef(levelSubscribers: list[BooleanArraySubscriber, BooleanArraySubscriber, BooleanArraySubscriber, BooleanArraySubscriber]):
-    defaultValue = [False for _ in range(4)]
-    reef = [booleanList.get(defaultValue) for booleanList in levelSubscribers]
+def grab_past_reef(levelSubscribers: list[BooleanArraySubscriber], published: bool):
+    if published:
+        defaultValue = [False for _ in range(4)]
+        #print(levelSubscribers[0].get(defaultValue))
+        reef = [booleanList.get(defaultValue) for booleanList in levelSubscribers]
+    else:
+        reef = [[False for _ in range(4)] for _ in range(12)]
+    #print(reef)
     return reef
 
 def main():
@@ -152,18 +163,27 @@ def main():
 
     # Reef Values
     reef = [[False for _ in range(4)] for _ in range(12)]
+    defaultReef = [False for _ in range(12)]
 
     # Grabs each of the topics for Network Tables
     robotPoseTopic = inst.getStructTopic("RobotPose", Pose3d)
     robotPosePublisher = robotPoseTopic.getEntry("Pose3d")
 
-    reefL1 = inst.getBooleanArrayTopic("ReefL1")
-    reefL2 = inst.getBooleanArrayTopic("ReefL2")
-    reefL3 = inst.getBooleanArrayTopic("ReefL3")
-    reefL4 = inst.getBooleanArrayTopic("ReefL4")
-    reefEntrysList = [reefL1, reefL2, reefL3, reefL4]
+    reefA = inst.getBooleanArrayTopic("ReefA")
+    reefB = inst.getBooleanArrayTopic("ReefB")
+    reefC = inst.getBooleanArrayTopic("ReefC")
+    reefD = inst.getBooleanArrayTopic("ReefD")
+    reefE = inst.getBooleanArrayTopic("ReefE")
+    reefF = inst.getBooleanArrayTopic("ReefF")
+    reefG = inst.getBooleanArrayTopic("ReefG")
+    reefH = inst.getBooleanArrayTopic("ReefH")
+    reefI = inst.getBooleanArrayTopic("ReefI")
+    reefJ = inst.getBooleanArrayTopic("ReefJ")
+    reefK = inst.getBooleanArrayTopic("ReefK")
+    reefL = inst.getBooleanArrayTopic("ReefL")
+    reefEntrysList = [reefA, reefB, reefC, reefD, reefE, reefF, reefG, reefH, reefI, reefJ, reefK, reefL]
 
-    reefSubscribers = [level.subscribe(reef[0]) for level in reefEntrysList]
+    reefSubscribers = [level.subscribe(defaultReef) for level in reefEntrysList]
     reefPublishers = [level.publish() for level in reefEntrysList]
 
     team = "blue"
@@ -174,6 +194,8 @@ def main():
     coralCalculator = CoralCalculator(team)
 
     hitboxes = hitbox_maker()
+
+    published = False
 
     
     
@@ -198,11 +220,13 @@ def main():
             if position:
                 robotPosePublisher.set(position.estimatedPose, timestamp)
 
-        reef = grab_past_reef(reefSubscribers)
+        reef = grab_past_reef(reefSubscribers, published)
+        #print(reef)
         coralCamera.camera_loop(reef, hitboxes)
         for level in reef:
             for publisher in reefPublishers:
                 publisher.set(level)
+                published = True
 
 if __name__ == "__main__":
     main()
