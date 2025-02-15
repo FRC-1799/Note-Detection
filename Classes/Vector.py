@@ -11,9 +11,6 @@ class vector:
         else:
             self.pose = Pose3d(cameraX, cameraY, cameraZ, Rotation3d(0, math.degrees(pitch), (math.degrees(yaw))))
 
-    
-
-
     def getPoseAtStep(self, lenght:float)->Pose3d:
         """
         Returns the pose of this vector when extended to the given length

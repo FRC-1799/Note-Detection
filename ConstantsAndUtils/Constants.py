@@ -7,7 +7,7 @@ class PhotonLibConstants:
     REEF_CAMERA_NAME = "ArducamReef"
     POSE_AMBIGUITY_TOLERANCE = 0.20
     REEF_WIDTH = 0.25
-    REEF_HEIGHT = 0.25  
+    REEF_HEIGHT = 0.25
     REEF_X_TOLERANCE = 0.5
     REEF_Y_TOLERANCE = 1
 
@@ -45,13 +45,13 @@ class PhotonLibConstants:
 class CameraConstants:
     horizontalAngleRad = math.radians(70)
     verticalAngleRad = math.radians(70)
-    horizontalPixels = 1000#640
-    verticalPixels = 500#384
+    horizontalPixels = 640
+    verticalPixels = 384
     reefCameraHorizontalAnglePerPixel = horizontalAngleRad / horizontalPixels
     reefCameraVerticalAnglePerPixel = verticalAngleRad / verticalPixels
-    ROBOT_TO_CAMERA_TRANSFORMATION = Transform3d(-0.3164, 0, 0.1472, Rotation3d(0, 45, 0)) # Placeholder, fix this when robot is cadded
-    cameraPosition = (0, 0, 0,)
-    vectorLengthToExtend = 30 # cm?
-    radius = 12
+    ROBOT_TO_CAMERA_TRANSFORMATION = Transform3d(2.513, 3.997, 0.72, Rotation3d(0, 0, 0)) # Placeholder, fix this when robot is cadded
+    cameraPosition = (2.513, 3.997, 0.72)
+    vectorLengthToExtend = 30 # m?
+    radius = 0.157
     confidenceTolerance = 0.60
 

@@ -2,26 +2,20 @@ import time
 import ntcore
 import cv2
 import wpimath
-from constants import PhotonLibConstants, CameraConstants
+from ConstantsAndUtils.Constants import PhotonLibConstants, CameraConstants
 from Classes.AprilTagCamera import *
 import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
-import FieldMirroringUtils
-import hitbox
 import Classes.CoralCamera as CoralCamera
 from ntcore import BooleanArraySubscriber
 from wpimath.units import degreesToRadians
+from Classes.Hitbox import CreateHitbox
+import subprocess
+
 
 
 team = "blue"
-
-def addTranslation2ds(translation1: Translation2d, translation2: Translation2d):
-    return Translation2d(translation1.X() + translation2.X(), translation1.Y() + translation2.Y())
-
-
-
-
 
 def fetch_robot_position() -> Pose3d:
     """
@@ -34,12 +28,14 @@ def fetch_robot_position() -> Pose3d:
     position, timestamp = grabAprilTagInformation.get_estimated_global_pose()
     return position, timestamp
 
-def grab_past_reef(levelSubscribers: list[BooleanArraySubscriber], published: bool):
-    if published:
-        defaultValue = [False for _ in range(4)]
-        reef = [booleanList.get(defaultValue) for booleanList in levelSubscribers]
-    else:
-        reef = [[False for _ in range(4)] for _ in range(12)]
+def grab_past_reef(reefSubscribers):
+    defaultValue = [False for _ in range(12)]
+    reef = [[] for _ in range(12)]
+    for subscriber in reefSubscribers:
+        reefLevelBools = subscriber.get(defaultValue)
+        for i, level in enumerate(reef):
+            level.append(reefLevelBools[i])
+            
     return reef
 
 def main():
@@ -51,67 +47,67 @@ def main():
 
     # Reef Values
     reef = [[False for _ in range(4)] for _ in range(12)]
-    defaultReef = [False for _ in range(12)]
+    defaultReef = [False for _ in range(4)]
 
     # Grabs each of the topics for Network Tables
     robotPoseTopic = inst.getStructTopic("RobotPose", Pose3d)
     robotPosePublisher = robotPoseTopic.getEntry("Pose3d")
 
-    reefA = inst.getBooleanArrayTopic("ReefA")
-    reefB = inst.getBooleanArrayTopic("ReefB")
-    reefC = inst.getBooleanArrayTopic("ReefC")
-    reefD = inst.getBooleanArrayTopic("ReefD")
-    reefE = inst.getBooleanArrayTopic("ReefE")
-    reefF = inst.getBooleanArrayTopic("ReefF")
-    reefG = inst.getBooleanArrayTopic("ReefG")
-    reefH = inst.getBooleanArrayTopic("ReefH")
-    reefI = inst.getBooleanArrayTopic("ReefI")
-    reefJ = inst.getBooleanArrayTopic("ReefJ")
-    reefK = inst.getBooleanArrayTopic("ReefK")
-    reefL = inst.getBooleanArrayTopic("ReefL")
-    reefEntrysList = [reefA, reefB, reefC, reefD, reefE, reefF, reefG, reefH, reefI, reefJ, reefK, reefL]
+    reefTable = inst.getTable("CoralLocations")
+    reefL1Topic = reefTable.getBooleanArrayTopic("ReefL1")
+    reefL2Topic = reefTable.getBooleanArrayTopic("ReefL2")
+    reefL3Topic = reefTable.getBooleanArrayTopic("ReefL3")
+    reefL4Topic = reefTable.getBooleanArrayTopic("ReefL4")
+    reefSubscribers = [reefL1Topic.subscribe(defaultReef), reefL2Topic.subscribe(defaultReef), reefL3Topic.subscribe(defaultReef), reefL4Topic.subscribe(defaultReef)]
+    reefPublishers = [reefL1Topic.publish(), reefL2Topic.publish(), reefL3Topic.publish(), reefL4Topic.publish()]
 
-    reefSubscribers = [level.subscribe(defaultReef) for level in reefEntrysList]
-    reefPublishers = [level.publish() for level in reefEntrysList]
+    fuckyou = inst.getTable("reefPose3dTable")
+    mommy = fuckyou.getStructArrayTopic("pose", Pose3d)
+    ahhhPublisher = mommy.publish()
 
     team = "blue"
 
     # Create an instance of the AprilTag camera
-    grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
+    #grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
     coralCamera = CoralCamera.CoralCamera()
-    coralCalculator = CoralCalculator(team)
 
-    hitboxes = hitbox_maker()
-
-    published = False
-
+    hitboxMakerClass = CreateHitbox()
+    hitboxes = hitboxMakerClass.hitbox_maker()
+#java -jar PhotonVisionJar/photonvision-v2024.3.1-linuxx64.jar
     running = True
     while running:
         # Get April Tags from the camera
-        aprilTags = grabAprilTagInformation.get_tags()
+        #aprilTags = grabAprilTagInformation.get_tags()
 
         if keyboard.is_pressed("q"):
             inst.stopServer()
             cv2.destroyAllWindows()
             break
 
-        if aprilTags:
-            robot_position_process = multiprocessing.Process(target=fetch_robot_position)
+        # if aprilTags:
+        #     robot_position_process = multiprocessing.Process(target=fetch_robot_position)
             
-            robot_position_process.start()
-            robot_position_process.join()
-            position, timestamp = fetch_robot_position()
+        #     robot_position_process.start()
+        #     robot_position_process.join()
+        #     position, timestamp = fetch_robot_position()
         
-            if position:
-                robotPosePublisher.set(position.estimatedPose, timestamp)
+        #     if position:
+        #         robotPosePublisher.set(position.estimatedPose, timestamp)
 
-        reef = grab_past_reef(reefSubscribers, published)
+        reef = grab_past_reef(reefSubscribers)
         coralCamera.camera_loop(reef, hitboxes)
+        
+        for level, publisher in enumerate(reefPublishers):
+            reefLevelBoolVals = []
+            for reefSection in reef:
+                reefLevelBoolVals.append(reefSection[level])
+            publisher.set(reefLevelBoolVals)
 
-        for level in reef:
-            for publisher in reefPublishers:
-                publisher.set(level)
-                published = True
+        branchList = hitboxMakerClass.returnBranchesList()
+        poseList = []
+        for branch in branchList:
+            poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
+        ahhhPublisher.set(poseList)
 
 if __name__ == "__main__":
     main()
