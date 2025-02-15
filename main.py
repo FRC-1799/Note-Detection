@@ -3,13 +3,13 @@ import ntcore
 import cv2
 import wpimath
 from constants import PhotonLibConstants, CameraConstants
-from classes import *
+from Classes.AprilTagCamera import *
 import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
 import FieldMirroringUtils
 import hitbox
-import camera
+import Classes.CoralCamera as CoralCamera
 from ntcore import BooleanArraySubscriber
 from wpimath.units import degreesToRadians
 
@@ -78,7 +78,7 @@ def main():
 
     # Create an instance of the AprilTag camera
     grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
-    coralCamera = camera.CoralCamera()
+    coralCamera = CoralCamera.CoralCamera()
     coralCalculator = CoralCalculator(team)
 
     hitboxes = hitbox_maker()
