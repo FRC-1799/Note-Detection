@@ -46,10 +46,10 @@ class CreateHitbox:
             addTranslation2ds(Translation2d(-3.5, 0.374), origin),  # F
             addTranslation2ds(Translation2d(-3.2, -0.24), origin),  # G
             addTranslation2ds(Translation2d(-3.2, 0.07), origin),   # H
-            addTranslation2ds(Translation2d(-3.880, 0.373), origin),  # I
-            addTranslation2ds(Translation2d(-4.164, 0.538), origin),  # J
-            addTranslation2ds(Translation2d(-4.405, 0.538), origin),  # K
-            addTranslation2ds(Translation2d(-4.690, 0.374), origin)   # L
+            addTranslation2ds(Translation2d(-3.45, -0.55), origin),  # I
+            addTranslation2ds(Translation2d(-3.8, -0.4), origin),  # J
+            addTranslation2ds(Translation2d(-4.15, -1.52), origin),  # K
+            addTranslation2ds(Translation2d(-4.5, -1.69), origin)   # L
         ]
 
         branchesCenterPositionRed = [FieldMirroringUtils.flipTranslation2d(pos) for pos in branchesCenterPositionBlue] # translates to red
@@ -109,7 +109,7 @@ class CreateHitbox:
                 # L2 stick, 20 cm away from center, 78cm above ground, 35 deg pitch
                 self.L2 = ReefscapeReefBranch(
                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.2, facing_outwards.radians())),
-                    facing_outwards, 0.7, math.radians(-35)
+                    facing_outwards, 0.72, math.radians(-35)
                 )
 
                 # L3 stick, 20 cm away from center, 118cm above ground, 35 deg pitch
@@ -120,7 +120,7 @@ class CreateHitbox:
 
                 # L4 stick, 30 cm away from center, 178cm above ground, vertical
                 self.L4 = ReefscapeReefBranch(
-                    addTranslation2ds(stick_center_position_on_field, Translation2d(0.26, facing_outwards.radians())),
+                    addTranslation2ds(stick_center_position_on_field, Translation2d(0.23, facing_outwards.radians())),
                     facing_outwards, 1.78, math.radians(-90)
                 )
 
