@@ -72,7 +72,9 @@ def main():
     coralCamera = CoralCamera.CoralCamera()
 
     hitboxMakerClass = CreateHitbox()
-    hitboxes = hitboxMakerClass.hitbox_maker()
+    hitboxCoral = hitboxMakerClass.coralHitboxMaker()
+    hitboxes = hitboxMakerClass.algeaHitboxMaker()
+
 #java -jar PhotonVisionJar/photonvision-v2024.3.1-linuxx64.jar
     running = True
     while running:
@@ -107,6 +109,7 @@ def main():
         poseList = []
         for branch in branchList:
             poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
+            #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
         ahhhPublisher.set(poseList)
 
 if __name__ == "__main__":
