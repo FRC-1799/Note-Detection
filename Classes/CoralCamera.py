@@ -19,7 +19,7 @@ class CoralCamera:
         self.screenHeight = CameraConstants.verticalPixels
         self.camera = cv2.VideoCapture(cameraIndex)
 
-    def camera_loop(self, reef: list[list[bool]], reefHitboxes: list):
+    def camera_loop(self, reef: list[list[bool]], algae: list[list[bool]], reefHitboxes: list, algaeHitboxes: list):
         ret, frame = self.camera.read()
 
         if ret:
@@ -33,6 +33,7 @@ class CoralCamera:
                     cls = int(box.cls[0].item())
                     if conf > CameraConstants.confidenceTolerance:
                         if self.model.names[cls].lower() == "coral":
+                            
                             # Top left X, top left Y, bottom right X, bottom right Y
                             x1, y1, x2, y2 = map(int, box.xyxy[0])
                             
@@ -76,7 +77,41 @@ class CoralCamera:
                             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                             cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                         
-                        # else: # Is algea
+                        else: # Is algae
+                            x1, y1, x2, y2 = map(int, box.xyxy[0])
+                            
+
+                            centerOfAlgae = ((x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1) 
+                            algaePitch = CameraConstants.reefCameraHorizontalAnglePerPixel * centerOfAlgae[0]
+                            algaeYaw = CameraConstants.reefCameraVerticalAnglePerPixel * centerOfAlgae[1]
+
+                            centerPitch = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
+                            centerYaw = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
+
+                            # Adjusts the pitch and yaw so that its center (0, 0) is in the middle of the camera lens
+                            algaePitch = algaePitch - centerPitch
+                            algaeYaw = -(algaeYaw - centerYaw)
+
+                            vectorOfAlgae = Vector.vector(CameraConstants.cameraPosition, algaePitch, algaeYaw)
+
+                            for increment in range(1, CameraConstants.vectorLengthToExtend):
+                                positionLocation = vectorOfAlgae.getPoseAtStep(increment)
+                                if vectorAlreadyCollided:
+                                    break
+                                
+                                for hitboxSection in algaeHitboxes:
+                                    for hitbox in hitboxSection:
+
+                                        # If the Pose3d is colliding with the hitbox, we know which level it is on, so we set that level to true
+                                        if hitbox.colidePose3d(positionLocation):
+                                            algae[algaeHitboxes.index(hitboxSection)][hitboxSection.index(hitbox)] = True
+                                            vectorAlreadyCollided = True
+                                            break
+                                    if vectorAlreadyCollided:
+                                        break
+                            
+                            # When the loop is exited, reset this variable in order to be able to search again
+                            vectorAlreadyCollided = False if vectorAlreadyCollided else True
 
 
             cv2.imshow('heheh', frame)

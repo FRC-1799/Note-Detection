@@ -52,6 +52,6 @@ class CameraConstants:
     ROBOT_TO_CAMERA_TRANSFORMATION = Transform3d(2.513, 3.997, 0.72, Rotation3d(0, 0, 0)) # Placeholder, fix this when robot is cadded
     cameraPosition = (2.513, 3.997, 0.72)
     vectorLengthToExtend = 30 # m?
-    radius = 0.157
+    radius = 0.1524
     confidenceTolerance = 0.60
 

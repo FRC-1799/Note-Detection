@@ -72,8 +72,8 @@ def main():
     coralCamera = CoralCamera.CoralCamera()
 
     hitboxMakerClass = CreateHitbox()
-    hitboxCoral = hitboxMakerClass.coralHitboxMaker()
-    hitboxes = hitboxMakerClass.algeaHitboxMaker()
+    hitboxes = hitboxMakerClass.coralHitboxMaker()
+    hitboxAlgae = hitboxMakerClass.algaeHitboxMaker()
 
 #java -jar PhotonVisionJar/photonvision-v2024.3.1-linuxx64.jar
     running = True
@@ -97,7 +97,14 @@ def main():
         #         robotPosePublisher.set(position.estimatedPose, timestamp)
 
         reef = grab_past_reef(reefSubscribers)
-        coralCamera.camera_loop(reef, hitboxes)
+        coralCamera.camera_loop(reef, "algea", hitboxes, "none")
+
+        branchList = hitboxMakerClass.returnBranchesList()
+        poseList = []
+        for branch in branchList:
+            poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
+            #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
+        
         
         for level, publisher in enumerate(reefPublishers):
             reefLevelBoolVals = []
@@ -105,12 +112,10 @@ def main():
                 reefLevelBoolVals.append(reefSection[level])
             publisher.set(reefLevelBoolVals)
 
-        branchList = hitboxMakerClass.returnBranchesList()
-        poseList = []
-        for branch in branchList:
-            poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
-            #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
         ahhhPublisher.set(poseList)
+            
+
+        
 
 if __name__ == "__main__":
     main()

@@ -38,18 +38,18 @@ class CreateHitbox:
 
         # Translation2d of the reef's position on the field based on the origin
         self.branchesCenterPositionBlue = [
-            Translation2d(-4.72, -3.05).__add__(origin),  # A
-            addTranslation2ds(Translation2d(-4.72, -3.39), origin),  # B
-            addTranslation2ds(Translation2d(-4.5, 1.5), origin),  # C
-            addTranslation2ds(Translation2d(-4.2, 1.3), origin),  # D
-            addTranslation2ds(Translation2d(-3.75, 0.25), origin),  # E
-            addTranslation2ds(Translation2d(-3.5, 0.374), origin),  # F
-            addTranslation2ds(Translation2d(-3.2, -0.24), origin),  # G
-            addTranslation2ds(Translation2d(-3.2, 0.07), origin),   # H
-            addTranslation2ds(Translation2d(-3.45, -0.55), origin),  # I
-            addTranslation2ds(Translation2d(-3.8, -0.4), origin),  # J
-            addTranslation2ds(Translation2d(-4.15, -1.52), origin),  # K
-            addTranslation2ds(Translation2d(-4.5, -1.69), origin)   # L
+            Translation2d(x=3.550000, y=1.055000), 
+            Translation2d(x=3.550000, y=0.715000), 
+            Translation2d(x=3.770000, y=5.605000), 
+            Translation2d(x=4.070000, y=5.405000), 
+            Translation2d(x=4.520000, y=4.355000), 
+            Translation2d(x=4.770000, y=4.479000), 
+            Translation2d(x=5.070000, y=3.865000), 
+            Translation2d(x=5.070000, y=4.175000), 
+            Translation2d(x=4.820000, y=3.555000), 
+            Translation2d(x=4.470000, y=3.705000), 
+            Translation2d(x=4.120000, y=2.585000), 
+            Translation2d(x=3.770000, y=2.415000)
         ]
 
         self.branchesCenterPositionRed = [FieldMirroringUtils.flipTranslation2d(pos) for pos in self.branchesCenterPositionBlue] # translates to red
@@ -119,7 +119,7 @@ class CreateHitbox:
 
                 # L4 stick, 30 cm away from center, 178cm above ground, vertical
                 self.L4 = ReefscapeReefBranch(
-                    addTranslation2ds(stick_center_position_on_field, Translation2d(0.23, facing_outwards.radians())),
+                    addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
                     facing_outwards, 1.78, math.radians(-90)
                 )
 
@@ -145,42 +145,42 @@ class CreateHitbox:
 
         return blueHitboxes if self.team == "blue" else redHitboxes 
     
-    def algeaHitboxMaker(self):
-        class L2Algea:
+    def algaeHitboxMaker(self):
+        class L2Algae:
             def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
                 roll, pitch, yaw = degreesToRadians(0), degreesToRadians(0), outwards_facing.rotateBy(Rotation2d((math.radians(90)))).radians()
                 coral_rotation = Rotation3d(roll, pitch, yaw)
                 first_position = center_position, (Translation2d(0.6, outwards_facing))
                 self.first_placement_pose = Pose3d(first_position[0].X(), first_position[0].Y(), 0.81, coral_rotation)
 
-        class L3Algea:
+        class L3Algae:
             def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
                 roll, pitch, yaw = degreesToRadians(0), degreesToRadians(0), outwards_facing.rotateBy(Rotation2d((math.radians(90)))).radians()
                 coral_rotation = Rotation3d(roll, pitch, yaw)
                 first_position = center_position, (Translation2d(0.6, outwards_facing))
                 self.first_placement_pose = Pose3d(first_position[0].X(), first_position[0].Y(), 1.21, coral_rotation)
 
-        class AlgeaTower:
+        class AlgaeTower:
             """
-            The L2 and L3 algeas
+            The L2 and L3 algaes
             """
             def __init__(self, stick_center_position_on_field: Translation2d, facing_outwards: Rotation2d):
 
                 # L2 position
-                self.L2 = L2Algea(
+                self.L2 = L2Algae(
                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
                     facing_outwards
                 )
 
                 # L3 position
-                self.L3 = L3Algea(
+                self.L3 = L3Algae(
                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
                     facing_outwards
                 )
 
        # for i in range(6):
             #for i in self.branchesCenterPositionBlue:
-            #branch = AlgeaTower(self.branchesCenterPositionBlue[i], self.branchesFacingOutwardsBlue[i])
+            #branch = AlgaeTower(self.branchesCenterPositionBlue[i], self.branchesFacingOutwardsBlue[i])
             #self.branchesList.append(branch)
             # branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CameraConstants.radius)
             # branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CameraConstants.radius)
