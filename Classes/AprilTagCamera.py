@@ -32,6 +32,10 @@ class AprilTagCamera:
 
         self.estimator.multiTagFallbackStrategy = PoseStrategy.LOWEST_AMBIGUITY
 
+    def isConnected(self):
+        return self.camera.isConnected()
+
+
     def get_estimated_global_pose(self) -> Optional[EstimatedRobotPose]:
         result = self.estimator.update()
         return result, result.timestampSeconds
