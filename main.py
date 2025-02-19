@@ -1,4 +1,5 @@
 import time
+from Classes import Hitbox
 import ntcore
 import cv2
 import wpimath
@@ -10,7 +11,7 @@ import keyboard
 import Classes.CoralCamera as CoralCamera
 from ntcore import BooleanArraySubscriber
 from wpimath.units import degreesToRadians
-from Classes.Hitbox import CreateHitbox
+from Classes.Hitbox import hitbox
 import subprocess
 
 
@@ -71,9 +72,9 @@ def main():
     #grabAprilTagInformation = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
     coralCamera = CoralCamera.CoralCamera()
 
-    hitboxMakerClass = CreateHitbox()
-    hitboxes = hitboxMakerClass.coralHitboxMaker()
-    hitboxAlgae = hitboxMakerClass.algaeHitboxMaker()
+    #hitboxMakerClass = CreateHitbox()
+    hitboxes = hitbox.makeHitboxes()#hitboxMakerClass.coralHitboxMaker()
+    hitboxAlgae = hitbox.makeAlgaeHitboxes()
 
 #java -jar PhotonVisionJar/photonvision-v2024.3.1-linuxx64.jar
     running = True
@@ -99,12 +100,11 @@ def main():
         reef = grab_past_reef(reefSubscribers)
         coralCamera.camera_loop(reef, "algea", hitboxes, "none")
 
-        branchList = hitboxMakerClass.returnBranchesList()
-        poseList = []
-        for branch in branchList:
-            poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
+        poseList =[]
+        for pose in hitboxes:
+            poseList.extend(pose.getPose())
             #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
-        
+        ahhhPublisher.set(poseList)
         
         for level, publisher in enumerate(reefPublishers):
             reefLevelBoolVals = []
