@@ -10,12 +10,12 @@ def addTranslation2ds(translation1: Translation2d, translation2: Translation2d):
 
 class hitbox:
 
-    def __init__(self, x: float, y:float, z:float, r:float):
-        self.x, self.y, self.z, self.r = x, y, z, r
+    def __init__(self, x: float, y:float, z:float, r:float, roll=0, pitch=0, yaw=0):
+        self.x, self.y, self.z, self.r, self.roll, self.pitch, self.yaw = x, y, z, r, roll, pitch, yaw
 
     @staticmethod
     def hitboxFromPose3d(pose:Pose3d, r: float)->Self:
-        return hitbox(pose.X(), pose.Y(), pose.Z(), r)
+        return hitbox(pose.X(), pose.Y(), pose.Z(), r, roll=pose.rotation().X(), pitch=pose.rotation().Y(), yaw=pose.rotation().Z())
     
 
     def colideXYZ(self, pointOnRay: tuple[float, float, float])->bool:
@@ -27,42 +27,41 @@ class hitbox:
         return self.colideXYZ(pointLocation)
     
     def getPose(self)->Pose3d:
-        return Pose3d(Translation3d(self.x, self.y, self.z), Rotation3d(0,0,0))
+        return Pose3d(Translation3d(self.x, self.y, self.z), Rotation3d(self.roll, self.pitch, self.yaw))
     
     @staticmethod
-    def makeHitboxes():
-        origin = Translation3d(FieldMirroringUtils.FIELD_WIDTH / 2, FieldMirroringUtils.FIELD_HEIGHT / 2, 0)
+    def makeHitboxes()->list[list[Pose3d]]:
+        
 
         blueHitboxes = [[None, None, None, None] for _ in range(12)]
         
 
         # Translation2d of the reef's position on the field based on the origin
         blueStarts = [
-            Translation3d(x=3.550000, y=1.055000, z=0), 
-            Translation3d(x=3.550000, y=0.715000, z=0), 
-            Translation3d(x=3.770000, y=5.605000, z=0), 
-            Translation3d(x=4.070000, y=5.405000, z=0), 
-            Translation3d(x=4.520000, y=4.355000, z=0), 
-            Translation3d(x=4.770000, y=4.479000, z=0), 
-            Translation3d(x=5.070000, y=3.865000, z=0), 
-            Translation3d(x=5.070000, y=4.175000, z=0), 
-            Translation3d(x=4.820000, y=3.555000, z=0), 
-            Translation3d(x=4.470000, y=3.705000, z=0), 
-            Translation3d(x=4.120000, y=2.585000, z=0), 
-            Translation3d(x=3.770000, y=2.415000, z=0)
+            Pose3d(x=4, y=4.189, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)),    #A
+            Pose3d(x=4, y=3.862, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)), #B
+            Pose3d(x=4.101, y=3.69, z=0, rotation=Rotation3d.fromDegrees(0, 0, 60)), #C
+            Pose3d(x=4.389, y=3.519, z=0, rotation=Rotation3d.fromDegrees(0, 0, 60)), #D
+            Pose3d(x=4.590, y=3.528, z=0, rotation=Rotation3d.fromDegrees(0, 0, 120)), #E
+            Pose3d(x=4.888, y=3.69, z=0, rotation=Rotation3d.fromDegrees(0, 0, 120)), #F
+            Pose3d(x=4.990, y=3.859, z=0, rotation=Rotation3d.fromDegrees(0, 0, 180)), #G
+            Pose3d(x=4.990, y=4.192, z=0, rotation=Rotation3d.fromDegrees(0, 0, 180)), #H
+            Pose3d(x=4.881, y=4.381, z=0, rotation=Rotation3d.fromDegrees(0, 0, 240)), #I
+            Pose3d(x=4.589, y=4.533, z=0, rotation=Rotation3d.fromDegrees(0, 0, 240)), #J
+            Pose3d(x=4.373, y=4.553, z=0, rotation=Rotation3d.fromDegrees(0, 0, 300)), #K
+            Pose3d(x=4.095, y=4.378, z=0, rotation=Rotation3d.fromDegrees(0, 0, 300))  #L
         ]
 
         editTran=[
-            Translation3d(0.15, 0, 0.5),
-            Translation3d(0.2, 0, 0.78),
-            Translation3d(0.2, 0, 1.18),
-            Translation3d(0.3, 0, 178),
+            Transform3d(Translation3d(-0.15, 0, 0.5), Rotation3d.fromDegrees(0, 0, 90)),
+            Transform3d(Translation3d(-0.2, 0, 0.78), Rotation3d.fromDegrees(0, 35, 0)),
+            Transform3d(Translation3d(-0.2, 0, 1.18), Rotation3d.fromDegrees(0, 35, 0)),
+            Transform3d(Translation3d(-0.3, 0, 1.78), Rotation3d.fromDegrees(0, 90, 0))
         ]
 
         for i in range(12):
             for j in range(4):
-                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(Pose3d(origin, Rotation3d())
-                    .transformBy(Transform3d(editTran[j], Rotation3d())).transformBy(Transform3d(blueStarts[i],Rotation3d())), CameraConstants.radius)
+                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CameraConstants.radius)
             
         return blueHitboxes
     

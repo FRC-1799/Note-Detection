@@ -101,8 +101,10 @@ def main():
         coralCamera.camera_loop(reef, "algea", hitboxes, "none")
 
         poseList =[]
-        for pose in hitboxes:
-            poseList.extend(pose.getPose())
+        for pole in hitboxes:
+           
+            for pose in pole:
+                poseList.append(pose.getPose())
             #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
         ahhhPublisher.set(poseList)
         
