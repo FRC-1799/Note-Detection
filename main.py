@@ -1,4 +1,5 @@
 import time
+from Classes import Hitbox
 import ntcore
 import cv2
 import wpimath
@@ -10,7 +11,7 @@ import keyboard
 import Classes.CoralCamera as CoralCamera
 
 from wpimath.units import degreesToRadians
-from Classes.Hitbox import CreateHitbox
+from Classes.Hitbox import hitbox
 import subprocess
 
 
@@ -82,6 +83,10 @@ def main():
     aprilTagCameraOpened = aprilTagCamera.isConnected()
     aprilTagCameraConnectionPublisher.set(aprilTagCameraOpened)
 
+    #hitboxMakerClass = CreateHitbox()
+    hitboxes = hitbox.makeHitboxes()#hitboxMakerClass.coralHitboxMaker()
+    hitboxAlgae = hitbox.makeAlgaeHitboxes()
+
     coralCamera = CoralCamera.CoralCamera()
     coralCameraOpened = coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(coralCameraOpened)
@@ -89,6 +94,7 @@ def main():
     hitboxMakerClass = CreateHitbox()
     hitboxes = hitboxMakerClass.coralHitboxMaker()
     hitboxAlgae = hitboxMakerClass.algaeHitboxMaker()
+
 
     
     while True:
@@ -110,6 +116,21 @@ def main():
                     robotPosePublisher.set(position.estimatedPose, timestamp)
 
 
+
+        poseList =[]
+        for pole in hitboxes:
+           
+            for pose in pole:
+                poseList.append(pose.getPose())
+            #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
+        ahhhPublisher.set(poseList)
+        
+        for level, publisher in enumerate(reefPublishers):
+            reefLevelBoolVals = []
+            for reefSection in reef:
+                reefLevelBoolVals.append(reefSection[level])
+            publisher.set(reefLevelBoolVals)
+
         if coralCameraOpened:
             reef = grab_past_reef(coralSubscribers)
             coralCamera.camera_loop(reef, "algea", hitboxes, "none",5)
@@ -126,6 +147,7 @@ def main():
                 for reefSection in reef:
                     reefLevelBoolVals.append(reefSection[level])
                 publisher.set(reefLevelBoolVals)
+
 
             pose3dPublisher.set(poseList)
             
