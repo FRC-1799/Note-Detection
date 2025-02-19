@@ -68,7 +68,27 @@ class hitbox:
     @staticmethod
     def makeAlgaeHitboxes():
 
-        blueHitboxes = [[] for _ in range(12)]
+        blueHitboxes = [[None, None] for _ in range(6)]
+        blueStarts = [
+            Pose3d(x=3.801, y=4.025, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)),    #A
+            Pose3d(x=4.192, y=3.439, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)), #B
+            Pose3d(x=4.838, y=3.409, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)), #C
+            Pose3d(x=5.209, y=4.025, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)), #D
+            Pose3d(x=4.823, y=4.611, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)), #E
+            Pose3d(x=4.132, y=4.626, z=0, rotation=Rotation3d.fromDegrees(0, 0, 0)), #F
+
+        ]
+
+        editTran=[
+            Transform3d(Translation3d(-0, 0, 0.9), Rotation3d.fromDegrees(0, 0, 0)),
+            Transform3d(Translation3d(0, 0, 1.3), Rotation3d.fromDegrees(0, 0, 0))
+        ]
+
+        for i in range(6):
+            for j in range(2):
+                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CameraConstants.radius)
+            
+        return blueHitboxes
 
 
 
