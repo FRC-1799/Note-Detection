@@ -8,7 +8,7 @@ import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
 import Classes.CoralCamera as CoralCamera
-from ntcore import BooleanArraySubscriber
+
 from wpimath.units import degreesToRadians
 from Classes.Hitbox import CreateHitbox
 import subprocess
@@ -51,10 +51,10 @@ def main():
     defaultAlgae = [False for _ in range(2)]
 
     # Grabs each of the topics for Network Tables
-    robotPoseTopic = inst.getStructTopic("RobotPose", Pose3d)
-    robotPosePublisher = robotPoseTopic.getEntry("Pose3d")
+    robotPoseTopic = inst.getStructTopic("visionRobotPose", Pose3d)
+    robotPosePublisher = robotPoseTopic.getEntry(Pose3d())
     aprilTagCameraConnectionTopic = inst.getBooleanTopic("AprilTagCameraConnection")
-    aprilTagCameraConnectionPublisher = aprilTagCameraConnectionTopic.getEntry("CameraConnected").publish()
+    aprilTagCameraConnectionPublisher = aprilTagCameraConnectionTopic.getEntry(True)
 
     # Reef Publishers and Subscribers
     reefTable = inst.getTable("CoralLocations")
@@ -66,9 +66,10 @@ def main():
     algae2Topic = reefTable.getBooleanArrayTopic("Algae2")
     coralSubscribers = [reefL1Topic.subscribe(defaultReef), reefL2Topic.subscribe(defaultReef), reefL3Topic.subscribe(defaultReef), reefL4Topic.subscribe(defaultReef)] 
     coralPublishers = [reefL1Topic.publish(), reefL2Topic.publish(), reefL3Topic.publish(), reefL4Topic.publish()]
-    algaeSubscribers = [algae1Topic.publish(defaultAlgae), algae2Topic.publish(defaultAlgae)]
+    algaeSubscribers = [algae1Topic.publish(), algae2Topic.publish()]
     algaePublishers = [algae1Topic.publish(), algae2Topic.publish()]
     reefCameraConnectionTopic = inst.getBooleanTopic("ReefCameraConnection")
+    reefCameraConnectionPublisher = reefCameraConnectionTopic.getEntry(True)
 
 
     # Reef Pose3D for debugging purposes
@@ -79,18 +80,18 @@ def main():
     # Create an instance of the AprilTag camera
     aprilTagCamera = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
     aprilTagCameraOpened = aprilTagCamera.isConnected()
-    aprilTagCameraConnectionPublisher.set(True if aprilTagCameraOpened else False)
+    aprilTagCameraConnectionPublisher.set(aprilTagCameraOpened)
 
     coralCamera = CoralCamera.CoralCamera()
     coralCameraOpened = coralCamera.camera.isOpened()
-    reefCameraConnectionTopic.set(True if coralCameraOpened else False)
+    reefCameraConnectionPublisher.set(coralCameraOpened)
     
     hitboxMakerClass = CreateHitbox()
     hitboxes = hitboxMakerClass.coralHitboxMaker()
     hitboxAlgae = hitboxMakerClass.algaeHitboxMaker()
 
-    running = True
-    while running:
+    
+    while True:
         # Get April Tags from the camera
         if keyboard.is_pressed("q"):
             inst.stopServer()
