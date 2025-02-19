@@ -107,7 +107,7 @@ def main():
                 robot_position_process.join()
                 position, timestamp = fetch_robot_position()
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
-                    position=position.relativeTo(FieldMirroringUtils.FIELD_HEIGHT, FieldMirroringUtils.FIELD_WIDTH, 0, Rotation3d)
+                    position=position.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
                 if position:
                     robotPosePublisher.set(position.estimatedPose, timestamp)
