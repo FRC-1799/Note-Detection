@@ -19,8 +19,9 @@ class CoralCamera:
         self.screenHeight = CameraConstants.verticalPixels
         self.camera = cv2.VideoCapture(cameraIndex)
 
-    def camera_loop(self, reef: list[list[bool]], algae: list[list[bool]], reefHitboxes: list, algaeHitboxes: list):
+    def camera_loop(self, reef: list[list[bool]], algae: list[list[bool]], reefHitboxes: list, algaeHitboxes: list, algaeNotSeenCounter: list):
         ret, frame = self.camera.read()
+
 
         if ret:
             frame = cv2.resize(frame, (self.screenWidth, self.screenHeight)) 
@@ -33,7 +34,7 @@ class CoralCamera:
                     cls = int(box.cls[0].item())
                     if conf > CameraConstants.confidenceTolerance:
                         if self.model.names[cls].lower() == "coral":
-                            
+
                             # Top left X, top left Y, bottom right X, bottom right Y
                             x1, y1, x2, y2 = map(int, box.xyxy[0])
                             
@@ -102,11 +103,23 @@ class CoralCamera:
                                 for hitboxSection in algaeHitboxes:
                                     for hitbox in hitboxSection:
 
-                                        # If the Pose3d is colliding with the hitbox, we know which level it is on, so we set that level to true
-                                        if hitbox.colidePose3d(positionLocation):
-                                            algae[algaeHitboxes.index(hitboxSection)][hitboxSection.index(hitbox)] = True
+                                        hitboxSectionIndex = algaeHitboxes.index(hitboxSection)
+                                        hitboxIndex = hitboxSection.index(hitbox)
+                                        algaeSeen = hitbox.colidePose3d(positionLocation)
+
+                                        # If we haven't seen the algae for more than the tolerance frames, it is not seen right now, and it is marked as true, then assume it isn't there anymore
+                                        if algaeNotSeenCounter[hitboxSectionIndex][hitboxIndex] > CameraConstants.algaeViewedTolerance and not algaeSeen and algae[hitboxSectionIndex][hitboxIndex]:
+                                            algae[hitboxSectionIndex][hitboxSection] = False
+                                        
+                                        # If we do see the algae and it is false, mark it as true
+                                        if algaeSeen and not algae[hitboxSectionIndex][hitboxIndex]:
+                                            algae[hitboxSectionIndex][hitboxIndex] = True
                                             vectorAlreadyCollided = True
                                             break
+
+                                        # If we don't see the algae, but it is marked as true, increase the counter
+                                        elif not algaeSeen and algae[hitboxSectionIndex][hitboxIndex]:
+                                            algaeNotSeenCounter[hitboxSectionIndex][hitboxIndex] += 1
                                     if vectorAlreadyCollided:
                                         break
                             

@@ -54,4 +54,5 @@ class CameraConstants:
     vectorLengthToExtend = 30 # m?
     radius = 0.1524
     confidenceTolerance = 0.60
+    algaeViewedTolerance = 100 # Times we can not see the algae before we mark it as false
 
