@@ -79,9 +79,9 @@ def main():
     pose3dPublisher = pose3dTableTopic.publish()
 
     # Create an instance of the AprilTag camera
-    aprilTagCamera = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
-    aprilTagCameraOpened = aprilTagCamera.isConnected()
-    aprilTagCameraConnectionPublisher.set(aprilTagCameraOpened)
+    aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, CameraConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
+    aprilTagCameraOpened = aprilTagCameraFront.isConnected()
+    aprilTagCameraConnectionPublisher.set(False)
 
     coralCamera = CoralCamera.CoralCamera()
     coralCameraOpened = False # coralCamera.camera.isOpened()
@@ -99,8 +99,9 @@ def main():
             cv2.destroyAllWindows()
             break
         
-        if True:#aprilTagCamera.isConnected():
-            aprilTags = aprilTagCamera.get_tags()
+        if aprilTagCameraFront.isConnected():
+            reefCameraConnectionPublisher.set(True)
+            aprilTags = aprilTagCameraFront.get_tags()
             if aprilTags:
                 robot_position_process = multiprocessing.Process(target=fetch_robot_position)
                 robot_position_process.start()
