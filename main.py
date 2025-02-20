@@ -9,16 +9,17 @@ import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
 import Classes.CoralCamera as CoralCamera
-
+from wpilib import DriverStation
 from wpimath.units import degreesToRadians
-from Classes.Hitbox import hitbox
+from Classes.Hitbox import CreateHitbox
+from ConstantsAndUtils import FieldMirroringUtils
 import subprocess
 
 
 
 team = "blue"
 
-def fetch_robot_position() -> Pose3d:
+def fetch_robot_position() -> tuple[Pose3d, float]:
     """
     Calculates robot position and returns it
     
@@ -79,16 +80,16 @@ def main():
     pose3dPublisher = pose3dTableTopic.publish()
 
     # Create an instance of the AprilTag camera
-    aprilTagCamera = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME)
-    aprilTagCameraOpened = aprilTagCamera.isConnected()
-    aprilTagCameraConnectionPublisher.set(aprilTagCameraOpened)
+    aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, CameraConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
+    aprilTagCameraOpened = aprilTagCameraFront.isConnected()
+    aprilTagCameraConnectionPublisher.set(False)
 
     #hitboxMakerClass = CreateHitbox()
     hitboxes = hitbox.makeHitboxes()#hitboxMakerClass.coralHitboxMaker()
     hitboxAlgae = hitbox.makeAlgaeHitboxes()
 
     coralCamera = CoralCamera.CoralCamera()
-    coralCameraOpened = coralCamera.camera.isOpened()
+    coralCameraOpened = False # coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(coralCameraOpened)
     
     hitboxMakerClass = CreateHitbox()
@@ -104,17 +105,20 @@ def main():
             cv2.destroyAllWindows()
             break
         
-        if aprilTagCamera.isConnected():
-            aprilTags = aprilTagCamera.get_tags()
+        if aprilTagCameraFront.isConnected():
+            reefCameraConnectionPublisher.set(True)
+            aprilTags = aprilTagCameraFront.get_tags()
             if aprilTags:
                 robot_position_process = multiprocessing.Process(target=fetch_robot_position)
                 robot_position_process.start()
                 robot_position_process.join()
                 position, timestamp = fetch_robot_position()
-            
+                if DriverStation.getAlliance == DriverStation.Alliance.kRed:
+                    position=position.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
+
                 if position:
                     robotPosePublisher.set(position.estimatedPose, timestamp)
-
+        #print("true")
 
 
         poseList =[]
