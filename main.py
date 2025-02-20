@@ -84,7 +84,7 @@ def main():
     aprilTagCameraConnectionPublisher.set(aprilTagCameraOpened)
 
     coralCamera = CoralCamera.CoralCamera()
-    coralCameraOpened = coralCamera.camera.isOpened()
+    coralCameraOpened = False # coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(coralCameraOpened)
     
     hitboxMakerClass = CreateHitbox()
@@ -99,7 +99,7 @@ def main():
             cv2.destroyAllWindows()
             break
         
-        if aprilTagCamera.isConnected():
+        if True:#aprilTagCamera.isConnected():
             aprilTags = aprilTagCamera.get_tags()
             if aprilTags:
                 robot_position_process = multiprocessing.Process(target=fetch_robot_position)
@@ -111,7 +111,7 @@ def main():
 
                 if position:
                     robotPosePublisher.set(position.estimatedPose, timestamp)
-
+        #print("true")
 
         if coralCameraOpened:
             reef = grab_past_reef(coralSubscribers)
