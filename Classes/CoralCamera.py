@@ -19,7 +19,7 @@ class CoralCamera:
         self.screenHeight = CameraConstants.verticalPixels
         self.camera = cv2.VideoCapture(cameraIndex)
 
-    def camera_loop(self, reef: list[list[bool]], algae: list[list[bool]], reefHitboxes: list, algaeHitboxes: list, algaeNotSeenCounter: list):
+    def camera_loop(self, reef: list[list[bool]], algae: list[list[bool]], reefHitboxes: list, algaeHitboxes: list, algaeNotSeenCounter: list, robotPosition):
         ret, frame = self.camera.read()
 
 
@@ -40,17 +40,17 @@ class CoralCamera:
                             
 
                             centerOfCoral = ((x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1) 
-                            coralPitch = CameraConstants.reefCameraHorizontalAnglePerPixel * centerOfCoral[0]
-                            coralYaw = CameraConstants.reefCameraVerticalAnglePerPixel * centerOfCoral[1]
+                            coralYaw = CameraConstants.reefCameraHorizontalAnglePerPixel * centerOfCoral[0]
+                            coralPitch = CameraConstants.reefCameraVerticalAnglePerPixel * centerOfCoral[1]
 
-                            centerPitch = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
-                            centerYaw = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
+                            centerYaw = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
+                            centerPitch = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
 
                             # Adjusts the pitch and yaw so that its center (0, 0) is in the middle of the camera lens
-                            coralPitch = coralPitch - centerPitch
-                            coralYaw = -(coralYaw - centerYaw)
+                            coralYaw = coralYaw - centerYaw
+                            coralPitch = -(coralPitch - centerPitch)
 
-                            vectorOfCoral = Vector.vector(CameraConstants.ROBOT_TO_CAMERA_ROTATED_TRANSFORMATION, coralPitch, coralYaw)
+                            vectorOfCoral = Vector.vector(robotPosition.transformBy(CameraConstants.ROBOT_TO_CAMERA_ROTATED_TRANSFORMATION), coralPitch, coralYaw)
 
                             # Loops again for a certain increment across the line, and the increment acts as the x value for the equation
                             for increment in range(1, CameraConstants.vectorLengthToExtend):
@@ -78,53 +78,53 @@ class CoralCamera:
                             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                             cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                         
-                        else: # Is algae
-                            x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        # else: # Is algae
+                        #     x1, y1, x2, y2 = map(int, box.xyxy[0])
                             
 
-                            centerOfAlgae = ((x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1) 
-                            algaePitch = CameraConstants.reefCameraHorizontalAnglePerPixel * centerOfAlgae[0]
-                            algaeYaw = CameraConstants.reefCameraVerticalAnglePerPixel * centerOfAlgae[1]
+                        #     centerOfAlgae = ((x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1) 
+                        #     algaeYaw = CameraConstants.reefCameraHorizontalAnglePerPixel * centerOfAlgae[0]
+                        #     algaePitch = CameraConstants.reefCameraVerticalAnglePerPixel * centerOfAlgae[1]
 
-                            centerPitch = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
-                            centerYaw = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
+                        #     centerYaw = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
+                        #     centerPitch = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
 
-                            # Adjusts the pitch and yaw so that its center (0, 0) is in the middle of the camera lens
-                            algaePitch = algaePitch - centerPitch
-                            algaeYaw = -(algaeYaw - centerYaw)
+                        #     # Adjusts the pitch and yaw so that its center (0, 0) is in the middle of the camera lens
+                        #     algaeYaw = algaeYaw - centerYaw
+                        #     algaePitch = -(algaePitch - centerPitch)
 
-                            vectorOfAlgae = Vector.vector(CameraConstants.cameraPosition, algaePitch, algaeYaw)
+                        #     vectorOfAlgae = Vector.vector(robotPosition.transformBy(CameraConstants.ROBOT_TO_CAMERA_ROTATED_TRANSFORMATION), algaePitch, algaeYaw)
 
-                            for increment in range(1, CameraConstants.vectorLengthToExtend):
-                                positionLocation = vectorOfAlgae.getPoseAtStep(increment)
-                                if vectorAlreadyCollided:
-                                    break
+                        #     for increment in range(1, CameraConstants.vectorLengthToExtend):
+                        #         positionLocation = vectorOfAlgae.getPoseAtStep(increment)
+                        #         if vectorAlreadyCollided:
+                        #             break
                                 
-                                for hitboxSection in algaeHitboxes:
-                                    for hitbox in hitboxSection:
+                        #         for hitboxSection in algaeHitboxes:
+                        #             for hitbox in hitboxSection:
 
-                                        hitboxSectionIndex = algaeHitboxes.index(hitboxSection)
-                                        hitboxIndex = hitboxSection.index(hitbox)
-                                        algaeSeen = hitbox.colidePose3d(positionLocation)
+                        #                 hitboxSectionIndex = algaeHitboxes.index(hitboxSection)
+                        #                 hitboxIndex = hitboxSection.index(hitbox)
+                        #                 algaeSeen = hitbox.colidePose3d(positionLocation)
 
-                                        # If we haven't seen the algae for more than the tolerance frames, it is not seen right now, and it is marked as true, then assume it isn't there anymore
-                                        if algaeNotSeenCounter[hitboxSectionIndex][hitboxIndex] > CameraConstants.algaeViewedTolerance and not algaeSeen and algae[hitboxSectionIndex][hitboxIndex]:
-                                            algae[hitboxSectionIndex][hitboxSection] = False
+                        #                 # If we haven't seen the algae for more than the tolerance frames, it is not seen right now, and it is marked as true, then assume it isn't there anymore
+                        #                 if algaeNotSeenCounter[hitboxSectionIndex][hitboxIndex] > CameraConstants.algaeViewedTolerance and not algaeSeen and algae[hitboxSectionIndex][hitboxIndex]:
+                        #                     algae[hitboxSectionIndex][hitboxSection] = False
                                         
-                                        # If we do see the algae and it is false, mark it as true
-                                        if algaeSeen and not algae[hitboxSectionIndex][hitboxIndex]:
-                                            algae[hitboxSectionIndex][hitboxIndex] = True
-                                            vectorAlreadyCollided = True
-                                            break
+                        #                 # If we do see the algae and it is false, mark it as true
+                        #                 if algaeSeen and not algae[hitboxSectionIndex][hitboxIndex]:
+                        #                     algae[hitboxSectionIndex][hitboxIndex] = True
+                        #                     vectorAlreadyCollided = True
+                        #                     break
 
-                                        # If we don't see the algae, but it is marked as true, increase the counter
-                                        elif not algaeSeen and algae[hitboxSectionIndex][hitboxIndex]:
-                                            algaeNotSeenCounter[hitboxSectionIndex][hitboxIndex] += 1
-                                    if vectorAlreadyCollided:
-                                        break
+                        #                 # If we don't see the algae, but it is marked as true, increase the counter
+                        #                 elif not algaeSeen and algae[hitboxSectionIndex][hitboxIndex]:
+                        #                     algaeNotSeenCounter[hitboxSectionIndex][hitboxIndex] += 1
+                        #             if vectorAlreadyCollided:
+                        #                 break
                             
-                            # When the loop is exited, reset this variable in order to be able to search again
-                            vectorAlreadyCollided = False if vectorAlreadyCollided else True
+                        #     # When the loop is exited, reset this variable in order to be able to search again
+                        #     vectorAlreadyCollided = False if vectorAlreadyCollided else True
 
 
             cv2.imshow('heheh', frame)

@@ -1,9 +1,9 @@
 from wpimath.geometry import Pose3d, Rotation3d, Transform3d
 import math
 class vector:
-    def __init__(self, cameraPosition: tuple[float, float, float], pitch:float, yaw: float, NumbersInRad=True):
+    def __init__(self, cameraPosition: Pose3d, pitch:float, yaw: float, NumbersInRad=True):
         self.self = self
-        cameraX, cameraY, cameraZ = cameraPosition
+        cameraX, cameraY, cameraZ = cameraPosition.X(), cameraPosition.Y(), cameraPosition.Z()
 
         if NumbersInRad:
             self.pose = Pose3d(cameraX, cameraY, cameraZ, Rotation3d(0, pitch, yaw))

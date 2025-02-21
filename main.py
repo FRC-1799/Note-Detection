@@ -51,11 +51,12 @@ def main():
     defaultReef = [False for _ in range(4)]
     defaultAlgae = [False for _ in range(2)]
 
-    # Grabs each of the topics for Network Tables
-    robotPoseTopic = inst.getStructTopic("visionRobotPose", Pose3d)
+    # Grabs the Robot's topic and publisher
+    robotPoseTopic = inst.getStructTopic("VisionRobotPose", Pose3d)
     robotPosePublisher = robotPoseTopic.getEntry(Pose3d())
     aprilTagCameraConnectionTopic = inst.getBooleanTopic("AprilTagCameraConnection")
     aprilTagCameraConnectionPublisher = aprilTagCameraConnectionTopic.getEntry(True)
+    robotPosition = None
 
     # Reef Publishers and Subscribers
     reefTable = inst.getTable("CoralLocations")
@@ -77,6 +78,7 @@ def main():
     reefPose3dTable = inst.getTable("reefPose3dTable")
     pose3dTableTopic = reefPose3dTable.getStructArrayTopic("pose", Pose3d)
     pose3dPublisher = pose3dTableTopic.publish()
+    
 
     # Create an instance of the AprilTag camera
     aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, CameraConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
@@ -107,12 +109,12 @@ def main():
                 robot_position_process = multiprocessing.Process(target=fetch_robot_position)
                 robot_position_process.start()
                 robot_position_process.join()
-                position, timestamp = fetch_robot_position()
+                robotPosition, timestamp = fetch_robot_position()
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
-                    position=position.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
+                    robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
-                if position:
-                    robotPosePublisher.set(position.estimatedPose, timestamp)
+                if robotPosition:
+                    robotPosePublisher.set(robotPosition.estimatedPose, timestamp)
         #print("true")
 
 
@@ -130,9 +132,9 @@ def main():
         #         reefLevelBoolVals.append(reefSection[level])
         #     publisher.set(reefLevelBoolVals)
 
-        if coralCamera.camera.isOpened():
+        if coralCamera.camera.isOpened() and robotPosition:
             reef = grab_past_reef(coralSubscribers)
-            coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5)
+            coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
 
             # branchList = hitboxMakerClass.returnBranchesList()
             # poseList = []
