@@ -1,5 +1,4 @@
 import time
-from Classes import Hitbox
 import ntcore
 import cv2
 import wpimath
@@ -11,7 +10,7 @@ import keyboard
 import Classes.CoralCamera as CoralCamera
 from wpilib import DriverStation
 from wpimath.units import degreesToRadians
-from Classes.Hitbox import CreateHitbox
+from Classes.Hitbox import hitbox
 from ConstantsAndUtils import FieldMirroringUtils
 import subprocess
 
@@ -68,7 +67,7 @@ def main():
     algae2Topic = reefTable.getBooleanArrayTopic("Algae2")
     coralSubscribers = [reefL1Topic.subscribe(defaultReef), reefL2Topic.subscribe(defaultReef), reefL3Topic.subscribe(defaultReef), reefL4Topic.subscribe(defaultReef)] 
     coralPublishers = [reefL1Topic.publish(), reefL2Topic.publish(), reefL3Topic.publish(), reefL4Topic.publish()]
-    algaeSubscribers = [algae1Topic.publish(), algae2Topic.publish()]
+    algaeSubscribers = [algae1Topic.subscribe(defaultAlgae), algae2Topic.subscribe(defaultAlgae)]
     algaePublishers = [algae1Topic.publish(), algae2Topic.publish()]
     reefCameraConnectionTopic = inst.getBooleanTopic("ReefCameraConnection")
     reefCameraConnectionPublisher = reefCameraConnectionTopic.getEntry(True)
@@ -81,20 +80,14 @@ def main():
 
     # Create an instance of the AprilTag camera
     aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_CAMERA_NAME, CameraConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
-    aprilTagCameraOpened = aprilTagCameraFront.isConnected()
     aprilTagCameraConnectionPublisher.set(False)
-
-    #hitboxMakerClass = CreateHitbox()
-    hitboxes = hitbox.makeHitboxes()#hitboxMakerClass.coralHitboxMaker()
-    hitboxAlgae = hitbox.makeAlgaeHitboxes()
 
     coralCamera = CoralCamera.CoralCamera()
     coralCameraOpened = False # coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(coralCameraOpened)
     
-    hitboxMakerClass = CreateHitbox()
-    hitboxes = hitboxMakerClass.coralHitboxMaker()
-    hitboxAlgae = hitboxMakerClass.algaeHitboxMaker()
+    coralHitboxes = hitbox.coralHitboxMaker()
+    algaeHitboxes = hitbox.algaeHitboxMaker()
 
 
     
@@ -122,7 +115,7 @@ def main():
 
 
         poseList =[]
-        for pole in hitboxes:
+        for pole in coralHitboxes:
            
             for pose in pole:
                 poseList.append(pose.getPose())
@@ -137,7 +130,7 @@ def main():
 
         if coralCameraOpened:
             reef = grab_past_reef(coralSubscribers)
-            coralCamera.camera_loop(reef, "algea", hitboxes, "none",5)
+            coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5)
 
             branchList = hitboxMakerClass.returnBranchesList()
             poseList = []

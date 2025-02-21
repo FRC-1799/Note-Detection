@@ -50,7 +50,7 @@ class CoralCamera:
                             coralPitch = coralPitch - centerPitch
                             coralYaw = -(coralYaw - centerYaw)
 
-                            vectorOfCoral = Vector.vector(CameraConstants.cameraPosition, coralPitch, coralYaw)
+                            vectorOfCoral = Vector.vector(CameraConstants.ROBOT_TO_CAMERA_ROTATED_TRANSFORMATION, coralPitch, coralYaw)
 
                             # Loops again for a certain increment across the line, and the increment acts as the x value for the equation
                             for increment in range(1, CameraConstants.vectorLengthToExtend):

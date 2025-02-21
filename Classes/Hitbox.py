@@ -30,7 +30,7 @@ class hitbox:
         return Pose3d(Translation3d(self.x, self.y, self.z), Rotation3d(self.roll, self.pitch, self.yaw))
     
     @staticmethod
-    def makeHitboxes()->list[list[Pose3d]]:
+    def makeCoralHitboxes()->list[list[Pose3d]]:
         
 
         blueHitboxes = [[None, None, None, None] for _ in range(12)]
