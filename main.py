@@ -83,11 +83,11 @@ def main():
     aprilTagCameraConnectionPublisher.set(False)
 
     coralCamera = CoralCamera.CoralCamera()
-    coralCameraOpened = False # coralCamera.camera.isOpened()
+    coralCameraOpened = coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(coralCameraOpened)
     
-    coralHitboxes = hitbox.coralHitboxMaker()
-    algaeHitboxes = hitbox.algaeHitboxMaker()
+    coralHitboxes = hitbox.makeCoralHitboxes()
+    algaeHitboxes = hitbox.makeAlgaeHitboxes()
 
 
     
@@ -97,6 +97,8 @@ def main():
             inst.stopServer()
             cv2.destroyAllWindows()
             break
+
+        startTime = time.time()
         
         if aprilTagCameraFront.isConnected():
             reefCameraConnectionPublisher.set(True)
@@ -114,29 +116,29 @@ def main():
         #print("true")
 
 
-        poseList =[]
-        for pole in coralHitboxes:
+        # poseList =[]
+        # for pole in coralHitboxes:
            
-            for pose in pole:
-                poseList.append(pose.getPose())
-            #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
-        ahhhPublisher.set(poseList)
+        #     for pose in pole:
+        #         poseList.append(pose.getPose())
+        #     #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
+        # ahhhPublisher.set(poseList)
         
-        for level, publisher in enumerate(reefPublishers):
-            reefLevelBoolVals = []
-            for reefSection in reef:
-                reefLevelBoolVals.append(reefSection[level])
-            publisher.set(reefLevelBoolVals)
+        # for level, publisher in enumerate(reefPublishers):
+        #     reefLevelBoolVals = []
+        #     for reefSection in reef:
+        #         reefLevelBoolVals.append(reefSection[level])
+        #     publisher.set(reefLevelBoolVals)
 
-        if coralCameraOpened:
+        if coralCamera.camera.isOpened():
             reef = grab_past_reef(coralSubscribers)
             coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5)
 
-            branchList = hitboxMakerClass.returnBranchesList()
-            poseList = []
-            for branch in branchList:
-                poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
-                #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
+            # branchList = hitboxMakerClass.returnBranchesList()
+            # poseList = []
+            # for branch in branchList:
+            #     poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
+            #     #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
             
             
             for level, publisher in enumerate(coralPublishers):
@@ -146,7 +148,10 @@ def main():
                 publisher.set(reefLevelBoolVals)
 
 
-            pose3dPublisher.set(poseList)
+            #pose3dPublisher.set(poseList)
+
+        endTime = time.time()
+        print(endTime - startTime)
             
 
         
