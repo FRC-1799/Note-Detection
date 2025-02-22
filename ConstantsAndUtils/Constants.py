@@ -2,8 +2,8 @@ from wpimath.geometry import Transform3d, Rotation3d, Translation2d, Rotation2d,
 import math
 
 class PhotonLibConstants:
-    APRIL_FRONT_TAG_CAMERA_NAME = "ArducamAprilTag0"
-    APRIL_BACK_TAG_CAMERA_NAME = "ArducamAprilTag1"
+    APRIL_TAG_FRONT_CAMERA_NAME = "ArducamAprilTag0"
+    APRIL_TAG_BACK_CAMERA_NAME = "ArducamAprilTag1"
     CORAL_CAMERA_NAME = "ArducamCoral"
     REEF_CAMERA_NAME = "ArducamReef"
     POSE_AMBIGUITY_TOLERANCE = 0.20
