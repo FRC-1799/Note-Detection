@@ -44,7 +44,7 @@ class CoralCamera:
                             coralPitch = CameraConstants.reefCameraVerticalAnglePerPixel * centerOfCoral[1]
 
                             centerYaw = CameraConstants.reefCameraHorizontalAnglePerPixel * (self.screenWidth / 2)
-                            centerPitch = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2)
+                            centerPitch = CameraConstants.reefCameraVerticalAnglePerPixel * (self.screenHeight / 2) + math.radians(10)
 
                             # Adjusts the pitch and yaw so that its center (0, 0) is in the middle of the camera lens
                             coralYaw = coralYaw - centerYaw

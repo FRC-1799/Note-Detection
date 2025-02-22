@@ -107,73 +107,30 @@ def main():
 
         startTime = time.time()
         
-       # if aprilTagCameraFront.isConnected():
-        aprilTagCameraConnectionPublisher.set(True)
-        aprilTags = aprilTagCameraFront.get_tags()
-        if aprilTags:
-            # robot_position_process = multiprocessing.Process(target=fetch_robot_position)
-            # robot_position_process.start()
-            # robot_position_process.join()
-            robotPosition, timestamp = fetch_robot_position()
-            if DriverStation.getAlliance == DriverStation.Alliance.kRed:
-                robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
+        if aprilTagCameraFront.isConnected():
+            aprilTagCameraConnectionPublisher.set(True)
+            aprilTags = aprilTagCameraFront.get_tags()
+            if aprilTags:
+                robotPosition, timestamp = fetch_robot_position()
+                if DriverStation.getAlliance == DriverStation.Alliance.kRed:
+                    robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
-            if robotPosition:
-                print(robotPosition)
-                robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
-    #print("true")
+                if robotPosition:
+                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
 
 
-    # # poseList =[]
-    # # for pole in coralHitboxes:
-        
-    # #     for pose in pole:
-    # #         poseList.append(pose.getPose())
-    # #     #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
-    # # ahhhPublisher.set(poseList)
-    
-    # for level, publisher in enumerate(reefPublishers):
-    #     reefLevelBoolVals = []
-    #     for reefSection in reef:
-    #         reefLevelBoolVals.append(reefSection[level])
-    #     publisher.set(reefLevelBoolVals)
-    # for level, publisher in enumerate(reefPublishers):
-    #     reefLevelBoolVals = []
-    #     for reefSection in reef:
-    #         reefLevelBoolVals.append(reefSection[level])
-    #     publisher.set(reefLevelBoolVals)
-
-    if coralCamera.camera.isOpened() and robotPosition and 5 == 8:
-        reef = grab_past_reef(coralSubscribers)
-        coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
-
-        # branchList = hitboxMakerClass.returnBranchesList()
-        # poseList = []
-        # for branch in branchList:
-        #     poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
-        #     #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
-        # branchList = hitboxMakerClass.returnBranchesList()
-        # poseList = []
-        # for branch in branchList:
-        #     poseList.extend([branch.L1.first_placement_pose, branch.L2.ideal_coral_placement_pose, branch.L3.ideal_coral_placement_pose, branch.L4.ideal_coral_placement_pose])
-        #     #poseList.extend([branch.L2.first_placement_pose, branch.L3.first_placement_pose])
-        
-        
-        for level, publisher in enumerate(coralPublishers):
-            reefLevelBoolVals = []
-            for reefSection in reef:
-                reefLevelBoolVals.append(reefSection[level])
-            publisher.set(reefLevelBoolVals)
-
-
-        #pose3dPublisher.set(poseList)
-
-    endTime = time.time()
-    #
-    # print(endTime - startTime)
-        
-
-    
-
+        if coralCamera.camera.isOpened() and robotPosition:
+            reefCameraConnectionPublisher.set(True)
+            reef = grab_past_reef(coralSubscribers)
+            coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
+            
+            for level, publisher in enumerate(coralPublishers):
+                reefLevelBoolVals = []
+                for reefSection in reef:
+                    reefLevelBoolVals.append(reefSection[level])
+                publisher.set(reefLevelBoolVals)
+                
+    time.sleep(0.01)
+            
 if __name__ == "__main__":
     main()
