@@ -38,7 +38,10 @@ class AprilTagCamera:
 
     def get_estimated_global_pose(self) -> Optional[EstimatedRobotPose]:
         result = self.estimator.update()
-        return result, result.timestampSeconds
+        if result:
+            return result, result.timestampSeconds
+        else:
+            return None, None
 
     def get_estimated_global_pose_2d(self) -> Optional[Pose2d]:
         result = self.estimator.update()

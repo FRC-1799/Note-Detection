@@ -18,16 +18,7 @@ import subprocess
 
 team = "blue"
 
-def fetch_robot_position() -> tuple[Pose3d, float]:
-    """
-    Calculates robot position and returns it
-    
-    Returns
-    Pose3d[Transform3d, Rotation3d]: 3d position made up of the robot's position (x, y, z) and its rotation (roll, pitch, yaw)
-    """
 
-    position, timestamp = grabAprilTagInformation.get_estimated_global_pose()
-    return position, timestamp
 
 def grab_past_reef(reefSubscribers):
     defaultValue = [False for _ in range(12)]
@@ -40,6 +31,17 @@ def grab_past_reef(reefSubscribers):
     return reef
 
 def main():
+    def fetch_robot_position() -> tuple[Pose3d, float]:
+        """
+        Calculates robot position and returns it
+        
+        Returns
+        Pose3d[Transform3d, Rotation3d]: 3d position made up of the robot's position (x, y, z) and its rotation (roll, pitch, yaw)
+        """
+
+        position, timestamp = aprilTagCameraFront.get_estimated_global_pose()
+        return position, timestamp
+    
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
     inst.stopServer()
@@ -51,11 +53,16 @@ def main():
     defaultReef = [False for _ in range(4)]
     defaultAlgae = [False for _ in range(2)]
 
+    
+    # Create an instance of the AprilTag camera
+    aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_FRONT_CAMERA_NAME, CameraConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
+
     # Grabs the Robot's topic and publisher
     robotPoseTopic = inst.getStructTopic("VisionRobotPose", Pose3d)
-    robotPosePublisher = robotPoseTopic.getEntry(Pose3d())
+    robotPosePublisher = robotPoseTopic.publish()
+
     aprilTagCameraConnectionTopic = inst.getBooleanTopic("AprilTagCameraConnection")
-    aprilTagCameraConnectionPublisher = aprilTagCameraConnectionTopic.getEntry(True)
+    aprilTagCameraConnectionPublisher = aprilTagCameraConnectionTopic.publish()
     robotPosition = None
 
     # Reef Publishers and Subscribers
@@ -80,9 +87,7 @@ def main():
     pose3dPublisher = pose3dTableTopic.publish()
     
 
-    # Create an instance of the AprilTag camera
-    aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_FRONT_CAMERA_NAME, CameraConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
-    aprilTagCameraConnectionPublisher.set(False)
+    
 
     coralCamera = CoralCamera.CoralCamera()
     coralCameraOpened = coralCamera.camera.isOpened()
@@ -106,15 +111,16 @@ def main():
         aprilTagCameraConnectionPublisher.set(True)
         aprilTags = aprilTagCameraFront.get_tags()
         if aprilTags:
-            robot_position_process = multiprocessing.Process(target=fetch_robot_position)
-            robot_position_process.start()
-            robot_position_process.join()
+            # robot_position_process = multiprocessing.Process(target=fetch_robot_position)
+            # robot_position_process.start()
+            # robot_position_process.join()
             robotPosition, timestamp = fetch_robot_position()
             if DriverStation.getAlliance == DriverStation.Alliance.kRed:
                 robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
             if robotPosition:
-                robotPosePublisher.set(robotPosition.estimatedPose)
+                print(robotPosition)
+                robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
     #print("true")
 
 
