@@ -2,7 +2,8 @@ from wpimath.geometry import Transform3d, Rotation3d, Translation2d, Rotation2d,
 import math
 
 class PhotonLibConstants:
-    APRIL_TAG_CAMERA_NAME = "ArducamAprilTag1"
+    APRIL_FRONT_TAG_CAMERA_NAME = "ArducamAprilTag0"
+    APRIL_BACK_TAG_CAMERA_NAME = "ArducamAprilTag1"
     CORAL_CAMERA_NAME = "ArducamCoral"
     REEF_CAMERA_NAME = "ArducamReef"
     POSE_AMBIGUITY_TOLERANCE = 0.20
@@ -43,12 +44,12 @@ class PhotonLibConstants:
     BLUE_APRIL_TAG_REEF_LOCATIONS = {17: (0, 1), 18: (2, 3), 19: (4, 5), 20: (6, 7), 21: (8, 9), 22: (10, 11)}
 
 class CameraConstants:
-    horizontalAngleRad = math.radians(70)
-    verticalAngleRad = math.radians(70)
+    coralCameraHorizontalAngleRad = math.radians(54.06)
+    coralCameraVerticalAngleRad = math.radians(41.91)
     horizontalPixels = 640
     verticalPixels = 384
-    reefCameraHorizontalAnglePerPixel = horizontalAngleRad / horizontalPixels
-    reefCameraVerticalAnglePerPixel = verticalAngleRad / verticalPixels
+    reefCameraHorizontalAnglePerPixel = coralCameraHorizontalAngleRad / horizontalPixels
+    reefCameraVerticalAnglePerPixel = coralCameraVerticalAngleRad / verticalPixels
     ROBOT_TO_CAMERA_FRONT_TRANSFORMATION = Transform3d(0.165, -0.249, 0.5245, Rotation3d(0, 0, 0)) # Front camera below the other one. This one is not tilted and for april tags. ID 0
     ROBOT_TO_CAMERA_ROTATED_TRANSFORMATION = Transform3d(0.174, -0.249, 0.9305, Rotation3d(0, 0, 0)) # Front camera above the other one. This one is tilted and for coral. ID 2
     ROBOT_TO_CAMERA_BACK_TRANSFORMATION = Transform3d(-0.339, -0.204, 0.4745, Rotation3d(0, 0, 0)) # Back camera. This one is for april tags. ID 1
