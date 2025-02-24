@@ -1,3 +1,4 @@
+import multiprocessing.process
 import time
 import ntcore
 import cv2
@@ -31,16 +32,43 @@ def grab_past_reef(reefSubscribers):
     return reef
 
 def main():
-    def fetch_robot_position() -> tuple[Pose3d, float]:
+    def fetchRobotPosition(queue: multiprocessing.Queue):
         """
-        Calculates robot position and returns it
-        
-        Returns
-        Pose3d[Transform3d, Rotation3d]: 3d position made up of the robot's position (x, y, z) and its rotation (roll, pitch, yaw)
+        Calculates robot position and adds it to the queue
         """
 
-        position, timestamp = aprilTagCameraFront.get_estimated_global_pose()
-        return position, timestamp
+        if aprilTagCameraFront.isConnected():
+            aprilTagCameraConnectionPublisher.set(True)
+            aprilTags = aprilTagCameraFront.get_tags()
+            if aprilTags:
+                robotPosition, timestamp = aprilTagCameraFront.get_estimated_global_pose()
+                queue.put(robotPosition)
+                if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
+                    robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
+
+                if robotPosition:
+                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+
+                
+
+    def fetchReefValues(queue: multiprocessing.Queue):
+        """
+        Finds coral and algae on the reef, and puts these values into the queue
+        """
+
+        if not queue.empty():
+            robotPosition = queue.get()
+
+            if coralCamera.camera.isOpened():
+                reefCameraConnectionPublisher.set(True)
+                reef = grab_past_reef(coralSubscribers)
+                coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
+                
+                for level, publisher in enumerate(coralPublishers):
+                    reefLevelBoolVals = []
+                    for reefSection in reef:
+                        reefLevelBoolVals.append(reefSection[level])
+                    publisher.set(reefLevelBoolVals)
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
@@ -85,9 +113,6 @@ def main():
     reefPose3dTable = inst.getTable("reefPose3dTable")
     pose3dTableTopic = reefPose3dTable.getStructArrayTopic("pose", Pose3d)
     pose3dPublisher = pose3dTableTopic.publish()
-    
-
-    
 
     coralCamera = CoralCamera.CoralCamera()
     coralCameraOpened = coralCamera.camera.isOpened()
@@ -105,32 +130,18 @@ def main():
             cv2.destroyAllWindows()
             break
 
-        startTime = time.time()
-        
-        if aprilTagCameraFront.isConnected():
-            aprilTagCameraConnectionPublisher.set(True)
-            aprilTags = aprilTagCameraFront.get_tags()
-            if aprilTags:
-                robotPosition, timestamp = fetch_robot_position()
-                if DriverStation.getAlliance == DriverStation.Alliance.kRed:
-                    robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
+        queue = multiprocessing.Queue()
 
-                if robotPosition:
-                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+        robotPositionProcess = multiprocessing.Process(target=fetchRobotPosition, args=(queue,))
+        reefValuesProcess = multiprocessing.Process(target=fetchReefValues, args=(queue,))
 
+        robotPositionProcess.start()
+        reefValuesProcess.start()
 
-        if coralCamera.camera.isOpened() and robotPosition:
-            reefCameraConnectionPublisher.set(True)
-            reef = grab_past_reef(coralSubscribers)
-            coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
-            
-            for level, publisher in enumerate(coralPublishers):
-                reefLevelBoolVals = []
-                for reefSection in reef:
-                    reefLevelBoolVals.append(reefSection[level])
-                publisher.set(reefLevelBoolVals)
+        robotPositionProcess.join()
+        reefValuesProcess.join()
                 
-    time.sleep(0.01)
+        time.sleep(0.01)
             
 if __name__ == "__main__":
     main()
