@@ -123,7 +123,10 @@ def main():
                 if robotPosition:
                     robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
 
-
+        ######## DELETE THIS #############
+        if not Constants.PhotonLibConstants.shouldTestAprilTags:
+            robotPosition = Pose3d(Translation3d(0,0,0), Rotation3d(0,0,0))
+            
         if coralCamera.camera.isOpened() and robotPosition:
             reefCameraConnectionPublisher.set(True)
             reef = grab_past_reef(coralSubscribers)
