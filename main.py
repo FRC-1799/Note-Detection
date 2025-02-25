@@ -39,6 +39,8 @@ def coralCameraIndex() -> int:
         device = 0
         
     return device
+
+
     
 def main():
     def fetch_robot_position() -> tuple[Pose3d, float]:
@@ -54,9 +56,12 @@ def main():
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
-    inst.stopServer()
     inst.setServerTeam(1799)
-    inst.startServer()
+
+    if Constants.CoralAndAlgaeCameraConstants.robotReal:
+        inst.startClient4("Vision")
+    else:
+        inst.startServer()
 
     # Reef Values
     reef = [[False for _ in range(4)] for _ in range(12)]
@@ -65,7 +70,7 @@ def main():
     defaultAlgae = [False for _ in range(2)]
     algaeNotSeenCounterList = [[0 for _ in range(2)] for _ in range(12)]
 
-    
+
     # Create an instance of the AprilTag camera
     aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_FRONT_CAMERA_NAME, PhotonLibConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
     aprilTagCameraBack = AprilTagCamera(PhotonLibConstants.APRIL_TAG_BACK_CAMERA_NAME, PhotonLibConstants.ROBOT_TO_CAMERA_BACK_TRANSFORMATION)
@@ -97,12 +102,13 @@ def main():
     reefPose3dTable = inst.getTable("reefPose3dTable")
     pose3dTableTopic = reefPose3dTable.getStructArrayTopic("pose", Pose3d)
     pose3dPublisher = pose3dTableTopic.publish()
+    reefPose3dToPublish = []
 
     coralCamera = CoralCamera.CoralCamera(cameraIndex=coralCameraIndex())
     coralCameraOpened = coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(False)
     
-    coralHitboxes = hitbox.makeCoralHitboxes()
+    coralHitboxes, pose3dReefValues = hitbox.makeCoralHitboxes()
     algaeHitboxes = hitbox.makeAlgaeHitboxes()
     
     while True:
@@ -137,6 +143,13 @@ def main():
                 for reefSection in reef:
                     reefLevelBoolVals.append(reefSection[level])
                 publisher.set(reefLevelBoolVals) 
+                
+        for reefSection in range(len(reef)):
+            for index in range(len(reefSection)):
+                if reef[reefSection][index]:
+                    reefPose3dToPublish.append(pose3dReefValues[reefSection][index])
+                
+        pose3dPublisher.set(reefPose3dToPublish)
                              
     time.sleep(0.01)
             

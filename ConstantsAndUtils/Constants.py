@@ -49,6 +49,7 @@ class PhotonLibConstants:
 class CoralAndAlgaeCameraConstants:
     shouldTestCoral = True
     shouldTestAlgae = False
+    robotReal = False
     coralCameraHorizontalAngleRad = math.radians(54.06)
     coralCameraVerticalAngleRad = math.radians(41.91)
     horizontalPixels = 640

@@ -79,6 +79,8 @@ class hitbox:
 
         ]
 
+        coralPose3dLocation = []
+
         editTran=[
             Transform3d(Translation3d(-0, 0, 0.9), Rotation3d.fromDegrees(0, 0, 0)),
             Transform3d(Translation3d(0, 0, 1.3), Rotation3d.fromDegrees(0, 0, 0))
@@ -86,9 +88,10 @@ class hitbox:
 
         for i in range(6):
             for j in range(2):
+                coralPose3dLocation.append(blueStarts[i].transformBy(editTran[j]))
                 blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CoralAndAlgaeCameraConstants.radius)
             
-        return blueHitboxes
+        return blueHitboxes, coralPose3dLocation 
 
 
 
