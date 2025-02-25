@@ -2,7 +2,7 @@ from typing import Self
 from wpimath.geometry import Pose3d, Rotation3d, Translation2d, Rotation2d, Translation3d, Transform3d
 from wpimath.units import degreesToRadians
 from ConstantsAndUtils import FieldMirroringUtils
-from ConstantsAndUtils.Constants import CameraConstants
+from ConstantsAndUtils.Constants import CoralAndAlgaeCameraConstants
 import math
 
 def addTranslation2ds(translation1: Translation2d, translation2: Translation2d):
@@ -61,7 +61,7 @@ class hitbox:
 
         for i in range(12):
             for j in range(4):
-                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CameraConstants.radius)
+                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CoralAndAlgaeCameraConstants.radius)
             
         return blueHitboxes
     
@@ -86,7 +86,7 @@ class hitbox:
 
         for i in range(6):
             for j in range(2):
-                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CameraConstants.radius)
+                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CoralAndAlgaeCameraConstants.radius)
             
         return blueHitboxes
 
@@ -168,10 +168,10 @@ class hitbox:
 #         for i in range(12):
 #             branch = ReefscapeReefBranchesTower(self.branchesCenterPositionBlue[i], self.branchesFacingOutwardsBlue[i])
 #             self.branchesList.append(branch)
-#             branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CameraConstants.radius)
-#             branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CameraConstants.radius)
-#             branchL3Hitbox = hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CameraConstants.radius)
-#             branchL4Hitbox = hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CameraConstants.radius)
+#             branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CoralAndAlgaeCameraConstants.radius)
+#             branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
+#             branchL3Hitbox = hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
+#             branchL4Hitbox = hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
 #             blueHitboxes[i].extend([branchL1Hitbox, branchL2Hitbox, branchL3Hitbox, branchL4Hitbox])
             
 
@@ -215,10 +215,10 @@ class hitbox:
 #             #for i in self.branchesCenterPositionBlue:
 #             #branch = AlgaeTower(self.branchesCenterPositionBlue[i], self.branchesFacingOutwardsBlue[i])
 #             #self.branchesList.append(branch)
-#             # branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CameraConstants.radius)
-#             # branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CameraConstants.radius)
-#             # branchL3Hitbox = hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CameraConstants.radius)
-#             # branchL4Hitbox = hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CameraConstants.radius)
+#             # branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CoralAndAlgaeCameraConstants.radius)
+#             # branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
+#             # branchL3Hitbox = hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
+#             # branchL4Hitbox = hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
     
 #     def returnBranchesList(self):
 #         return self.branchesList
