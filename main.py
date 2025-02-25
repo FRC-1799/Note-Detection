@@ -42,22 +42,19 @@ def coralCameraIndex() -> int:
     return device
     
 def main():
-    def fetchRobotPosition(queue: multiprocessing.Queue):
+    def fetchRobotPosition():
         """
         Calculates robot position and adds it to the queue
         """
+        robotPosition, timestamp = aprilTagCameraFront.get_estimated_global_pose()
+        
+        if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
+            robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
-        if aprilTagCameraFront.isConnected():
-            aprilTagCameraConnectionPublisher.set(True)
-            aprilTags = aprilTagCameraFront.get_tags()
-            if aprilTags:
-                robotPosition, timestamp = aprilTagCameraFront.get_estimated_global_pose()
-                queue.put(robotPosition)
-                if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
-                    robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
-
-                if robotPosition:
-                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+        if robotPosition:
+            robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+        
+        return robotPosition, timestamp
 
                 
 
@@ -144,16 +141,11 @@ def main():
             aprilTagCameraConnectionPublisher.set(True)
             aprilTags = aprilTagCameraFront.get_tags()
             if aprilTags:
-                robotPosition, timestamp = fetch_robot_position()
+                robotPosition, timestamp = fetchRobotPosition()
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
                     robotPosition = robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
-
-
-        robotPositionProcess = multiprocessing.Process(target=fetchRobotPosition, args=(queue,))
-        reefValuesProcess = multiprocessing.Process(target=fetchReefValues, args=(queue,))
-
-        robotPositionProcess.start()
-        reefValuesProcess.start()
+                    
+                robotPosePublisher.set(robotPosition, timestamp)
 
         if coralCamera.camera.isOpened() and robotPosition:
             reefCameraConnectionPublisher.set(True)
