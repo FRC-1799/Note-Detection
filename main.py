@@ -13,7 +13,7 @@ from wpimath.units import degreesToRadians
 from Classes.Hitbox import hitbox
 from ConstantsAndUtils import FieldMirroringUtils
 import subprocess
-from pygrabber.dshow_graph import FilterGraph
+#from pygrabber.dshow_graph import FilterGraph
 
 
 team = "blue"
@@ -31,7 +31,8 @@ def grab_past_reef(reefSubscribers):
     return reef 
 
 def coralCameraIndex() -> int:
-    graph = FilterGraph()
+    #graph = FilterGraph()
+    return 0
     
     try:
         device = graph.get_input_devices().index(Constants.CoralAndAlgaeCameraConstants.CORAL_CAMERA_NAME)
@@ -126,14 +127,16 @@ def main():
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
                     robotPosition = robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
+                robotPosition = robotPosition.estimatedPose
                 if robotPosition:
-                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+                    print(robotPosition)
+                    robotPosePublisher.set(robotPosition, int(timestamp))
 
         ######## DELETE THIS #############
-        if not Constants.PhotonLibConstants.shouldTestAprilTags:
-            robotPosition = Pose3d(Translation3d(0,0,0), Rotation3d(0,0,0))
+        # if not Constants.PhotonLibConstants.shouldTestAprilTags:
+        #     robotPosition = Pose3d(Translation3d(0,0,0), Rotation3d(0,0,0))
             
-        if coralCamera.camera.isOpened() and robotPosition:
+        if coralCamera.camera.isOpened() and robotPosition and (Constants.CoralAndAlgaeCameraConstants.shouldTestAlgae or Constants.CoralAndAlgaeCameraConstants.shouldTestCoral):
             reefCameraConnectionPublisher.set(True)
             reef = grab_past_reef(coralSubscribers)
             coralCamera.camera_loop(reef, algae, coralHitboxes, algaeHitboxes, algaeNotSeenCounterList, robotPosition)
@@ -144,12 +147,12 @@ def main():
                     reefLevelBoolVals.append(reefSection[level])
                 publisher.set(reefLevelBoolVals) 
                 
-        for reefSection in range(len(reef)):
-            for index in range(len(reefSection)):
-                if reef[reefSection][index]:
-                    reefPose3dToPublish.append(pose3dReefValues[reefSection][index])
-                
-        pose3dPublisher.set(reefPose3dToPublish)
+            for reefSection in range(len(reef)):
+                for index in range(len(reefSection)):
+                    if reef[reefSection][index]:
+                        reefPose3dToPublish.append(pose3dReefValues[reefSection][index])
+                    
+            pose3dPublisher.set(reefPose3dToPublish)
                              
     time.sleep(0.01)
             

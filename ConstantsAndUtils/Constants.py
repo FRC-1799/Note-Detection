@@ -2,7 +2,7 @@ from wpimath.geometry import Transform3d, Rotation3d, Translation2d, Rotation2d,
 import math
 
 class PhotonLibConstants:
-    shouldTestAprilTags = False
+    shouldTestAprilTags = True
     APRIL_TAG_FRONT_CAMERA_NAME = "ArducamAprilTag0"
     APRIL_TAG_BACK_CAMERA_NAME = "ArducamAprilTag1"
     POSE_AMBIGUITY_TOLERANCE = 0.20
@@ -47,7 +47,7 @@ class PhotonLibConstants:
     BLUE_APRIL_TAG_REEF_LOCATIONS = {17: (0, 1), 18: (2, 3), 19: (4, 5), 20: (6, 7), 21: (8, 9), 22: (10, 11)}
 
 class CoralAndAlgaeCameraConstants:
-    shouldTestCoral = True
+    shouldTestCoral = False
     shouldTestAlgae = False
     robotReal = False
     coralCameraHorizontalAngleRad = math.radians(54.06)
