@@ -1,3 +1,4 @@
+import multiprocessing.process
 import time
 import ntcore
 import cv2
@@ -38,16 +39,40 @@ def coralCameraIndex() -> int:
 
     
 def main():
-    def fetch_robot_position() -> tuple[Pose3d, float]:
+    def fetchRobotPosition():
         """
-        Calculates robot position and returns it
+        Calculates robot position and adds it to the queue
+        """
+        robotPosition, timestamp = aprilTagCameraFront.get_estimated_global_pose()
         
-        Returns
-        Pose3d[Transform3d, Rotation3d]: 3d position made up of the robot's position (x, y, z) and its rotation (roll, pitch, yaw)
+        if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
+            robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
+
+        if robotPosition:
+            robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+        
+        return robotPosition, timestamp
+
+                
+
+    def fetchReefValues(queue: multiprocessing.Queue):
+        """
+        Finds coral and algae on the reef, and puts these values into the queue
         """
 
-        position, timestamp = aprilTagCameraFront.get_estimated_global_pose()
-        return position, timestamp
+        if not queue.empty():
+            robotPosition = queue.get()
+
+            if coralCamera.camera.isOpened():
+                reefCameraConnectionPublisher.set(True)
+                reef = grab_past_reef(coralSubscribers)
+                coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
+                
+                for level, publisher in enumerate(coralPublishers):
+                    reefLevelBoolVals = []
+                    for reefSection in reef:
+                        reefLevelBoolVals.append(reefSection[level])
+                    publisher.set(reefLevelBoolVals)
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
@@ -110,12 +135,12 @@ def main():
             inst.stopServer()
             cv2.destroyAllWindows()
             break
-        
+
         if (aprilTagCameraFront.isConnected() or aprilTagCameraBack.isConnected()) and Constants.PhotonLibConstants.shouldTestAprilTags:
             aprilTagCameraConnectionPublisher.set(True)
             aprilTags = aprilTagCameraFront.get_tags()
             if aprilTags:
-                robotPosition, timestamp = fetch_robot_position()
+                robotPosition, timestamp = fetchRobotPosition()
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
                     robotPosition = robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
@@ -127,6 +152,7 @@ def main():
             robotPosition = Pose3d(Translation3d(0,0,0), Rotation3d(0,0,0))
             
         if coralCamera.camera.isOpened() and robotPosition and (Constants.CoralAndAlgaeCameraConstants.shouldTestAlgae or Constants.CoralAndAlgaeCameraConstants.shouldTestCoral):
+
             reefCameraConnectionPublisher.set(True)
             reef = grab_past_reef(coralSubscribers)
             coralCamera.findCoralsOnReef(reef, algae, coralHitboxes, algaeHitboxes, algaeNotSeenCounterList, robotPosition)
