@@ -13,7 +13,17 @@ from Classes.Hitbox import hitbox
 from ConstantsAndUtils import FieldMirroringUtils
 import subprocess
 
-def grab_past_reef(reefSubscribers):
+def grab_past_reef(reefSubscribers) -> list[list]:
+    """
+    Grabs the past value of the reef
+    
+    Parameters:
+    reefSubscribers - Subscribers of the reef
+
+    Returns:
+    list[list] - List of a list of boolean values for the reef
+    """
+
     defaultValue = [False for _ in range(12)]
     reef = [[] for _ in range(12)]
     for subscriber in reefSubscribers:
@@ -37,9 +47,13 @@ def coralCameraIndex() -> int:
 
     
 def main():
-    def fetchRobotPosition():
+    def fetchRobotPosition() -> tuple[Pose3d, float]:
         """
         Calculates robot position and adds it to the queue
+
+        Returns:
+        tuple[Pose3d, float] - the position of the robot as well as the timestamp this position was 
+        obtained at
         """
         robotPosition, timestamp = aprilTagCameraFront.get_estimated_global_pose()
         
@@ -50,6 +64,40 @@ def main():
             robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
         
         return robotPosition, timestamp
+    
+    def updateReef():
+        """
+        Updates the reef's values on Network Tables
+        """
+
+        for level, publisher in enumerate(coralPublishers):
+            reefLevelBoolVals = []
+            for reefSection in reef:
+                reefLevelBoolVals.append(reefSection[level])
+            publisher.set(reefLevelBoolVals) 
+
+    def createReefPubSub() -> list[list]:
+        """
+        Creates the publishers and subscribers for the reef, including both the algae and coral
+        subscribers and publishers
+
+        Returns:
+        list[list] - List of all of the lists for the publishers and subscribers
+        """
+
+        reefTable = inst.getTable("ReefLocationTable")
+        reefL1Topic = reefTable.getBooleanArrayTopic("ReefL1")
+        reefL2Topic = reefTable.getBooleanArrayTopic("ReefL2")
+        reefL3Topic = reefTable.getBooleanArrayTopic("ReefL3")
+        reefL4Topic = reefTable.getBooleanArrayTopic("ReefL4")
+        algae1Topic = reefTable.getBooleanArrayTopic("Algae1")
+        algae2Topic = reefTable.getBooleanArrayTopic("Algae2")
+        coralSubscribers = [reefL1Topic.subscribe(defaultReef), reefL2Topic.subscribe(defaultReef), reefL3Topic.subscribe(defaultReef), reefL4Topic.subscribe(defaultReef)] 
+        coralPublishers = [reefL1Topic.publish(), reefL2Topic.publish(), reefL3Topic.publish(), reefL4Topic.publish()]
+        algaeSubscribers = [algae1Topic.subscribe(defaultAlgae), algae2Topic.subscribe(defaultAlgae)]
+        algaePublishers = [algae1Topic.publish(), algae2Topic.publish()]
+
+        return coralSubscribers, coralPublishers, algaeSubscribers, algaePublishers
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
@@ -80,20 +128,10 @@ def main():
     robotPosition = None
 
     # Reef Publishers and Subscribers
-    reefTable = inst.getTable("ReefLocationTable")
-    reefL1Topic = reefTable.getBooleanArrayTopic("ReefL1")
-    reefL2Topic = reefTable.getBooleanArrayTopic("ReefL2")
-    reefL3Topic = reefTable.getBooleanArrayTopic("ReefL3")
-    reefL4Topic = reefTable.getBooleanArrayTopic("ReefL4")
-    algae1Topic = reefTable.getBooleanArrayTopic("Algae1")
-    algae2Topic = reefTable.getBooleanArrayTopic("Algae2")
-    coralSubscribers = [reefL1Topic.subscribe(defaultReef), reefL2Topic.subscribe(defaultReef), reefL3Topic.subscribe(defaultReef), reefL4Topic.subscribe(defaultReef)] 
-    coralPublishers = [reefL1Topic.publish(), reefL2Topic.publish(), reefL3Topic.publish(), reefL4Topic.publish()]
-    algaeSubscribers = [algae1Topic.subscribe(defaultAlgae), algae2Topic.subscribe(defaultAlgae)]
-    algaePublishers = [algae1Topic.publish(), algae2Topic.publish()]
+    coralSubscribers, coralPublishers, algaeSubscribers, algaePublishers = createReefPubSub()
+
     reefCameraConnectionTopic = inst.getBooleanTopic("ReefCameraConnection") # if the reef camera is connected
     reefCameraConnectionPublisher = reefCameraConnectionTopic.getEntry(True)
-
 
     # Reef Pose3D for debugging purposes
     reefPose3dTable = inst.getTable("reefPose3dTable")
@@ -129,16 +167,11 @@ def main():
             robotPosition = Pose3d(Translation3d(0,0,0), Rotation3d(0,0,0))
             
         if coralCamera.camera.isOpened() and robotPosition and (Constants.CoralAndAlgaeCameraConstants.shouldTestAlgae or Constants.CoralAndAlgaeCameraConstants.shouldTestCoral):
-
             reefCameraConnectionPublisher.set(True)
             reef = grab_past_reef(coralSubscribers)
-            coralCamera.findCoralsOnReef(reef, algae, coralHitboxes, algaeHitboxes, algaeNotSeenCounterList, robotPosition)
+            coralCamera.findCoralsAndAlgaesOnReef(reef, algae, coralHitboxes, algaeHitboxes, algaeNotSeenCounterList, robotPosition)
             
-            for level, publisher in enumerate(coralPublishers):
-                reefLevelBoolVals = []
-                for reefSection in reef:
-                    reefLevelBoolVals.append(reefSection[level])
-                publisher.set(reefLevelBoolVals) 
+            updateReef()
                 
             for reefSection in range(len(reef)):
                 for index in range(len(reefSection)):
