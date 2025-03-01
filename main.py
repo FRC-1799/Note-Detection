@@ -1,11 +1,9 @@
-import multiprocessing.process
 import time
 import ntcore
 import cv2
 import wpimath
 from ConstantsAndUtils.Constants import PhotonLibConstants, CoralAndAlgaeCameraConstants
 from Classes.AprilTagCamera import *
-import multiprocessing
 from wpimath.geometry import Pose3d, Transform3d, Translation2d, Rotation2d, Rotation3d
 import keyboard
 import Classes.CoralCamera as CoralCamera
@@ -52,27 +50,6 @@ def main():
             robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
         
         return robotPosition, timestamp
-
-                
-
-    def fetchReefValues(queue: multiprocessing.Queue):
-        """
-        Finds coral and algae on the reef, and puts these values into the queue
-        """
-
-        if not queue.empty():
-            robotPosition = queue.get()
-
-            if coralCamera.camera.isOpened():
-                reefCameraConnectionPublisher.set(True)
-                reef = grab_past_reef(coralSubscribers)
-                coralCamera.camera_loop(reef, "algea", coralHitboxes, "none",5, robotPosition)
-                
-                for level, publisher in enumerate(coralPublishers):
-                    reefLevelBoolVals = []
-                    for reefSection in reef:
-                        reefLevelBoolVals.append(reefSection[level])
-                    publisher.set(reefLevelBoolVals)
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
