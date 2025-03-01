@@ -13,7 +13,6 @@ from wpimath.units import degreesToRadians
 from Classes.Hitbox import hitbox
 from ConstantsAndUtils import FieldMirroringUtils
 import subprocess
-from pygrabber.dshow_graph import FilterGraph
 
 def grab_past_reef(reefSubscribers):
     defaultValue = [False for _ in range(12)]
@@ -26,6 +25,7 @@ def grab_past_reef(reefSubscribers):
     return reef 
 
 def coralCameraIndex() -> int:
+    return 0
     graph = FilterGraph()
     
     try:
@@ -52,11 +52,11 @@ def main():
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
     inst.setServerTeam(1799)
-
     if Constants.CoralAndAlgaeCameraConstants.robotReal:
         inst.startClient4("Vision")
     else:
         inst.startServer()
+
 
     # Reef Values
     reef = [[False for _ in range(4)] for _ in range(12)]
