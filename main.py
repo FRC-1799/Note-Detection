@@ -14,12 +14,6 @@ from wpimath.units import degreesToRadians
 from Classes.Hitbox import hitbox
 from ConstantsAndUtils import FieldMirroringUtils
 import subprocess
-from pygrabber.dshow_graph import FilterGraph
-
-
-team = "blue"
-
-
 
 def grab_past_reef(reefSubscribers):
     defaultValue = [False for _ in range(12)]
@@ -32,6 +26,7 @@ def grab_past_reef(reefSubscribers):
     return reef 
 
 def coralCameraIndex() -> int:
+    return 0
     graph = FilterGraph()
     
     try:
@@ -40,6 +35,8 @@ def coralCameraIndex() -> int:
         device = 0
         
     return device
+
+
     
 def main():
     def fetchRobotPosition():
@@ -79,9 +76,12 @@ def main():
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
-    inst.stopServer()
     inst.setServerTeam(1799)
-    inst.startServer()
+    if Constants.CoralAndAlgaeCameraConstants.robotReal:
+        inst.startClient4("Vision")
+    else:
+        inst.startServer()
+
 
     # Reef Values
     reef = [[False for _ in range(4)] for _ in range(12)]
@@ -90,7 +90,7 @@ def main():
     defaultAlgae = [False for _ in range(2)]
     algaeNotSeenCounterList = [[0 for _ in range(2)] for _ in range(12)]
 
-    
+
     # Create an instance of the AprilTag camera
     aprilTagCameraFront = AprilTagCamera(PhotonLibConstants.APRIL_TAG_FRONT_CAMERA_NAME, PhotonLibConstants.ROBOT_TO_CAMERA_FRONT_TRANSFORMATION)
     aprilTagCameraBack = AprilTagCamera(PhotonLibConstants.APRIL_TAG_BACK_CAMERA_NAME, PhotonLibConstants.ROBOT_TO_CAMERA_BACK_TRANSFORMATION)
@@ -114,7 +114,7 @@ def main():
     coralPublishers = [reefL1Topic.publish(), reefL2Topic.publish(), reefL3Topic.publish(), reefL4Topic.publish()]
     algaeSubscribers = [algae1Topic.subscribe(defaultAlgae), algae2Topic.subscribe(defaultAlgae)]
     algaePublishers = [algae1Topic.publish(), algae2Topic.publish()]
-    reefCameraConnectionTopic = inst.getBooleanTopic("ReefCameraConnection")
+    reefCameraConnectionTopic = inst.getBooleanTopic("ReefCameraConnection") # if the reef camera is connected
     reefCameraConnectionPublisher = reefCameraConnectionTopic.getEntry(True)
 
 
@@ -122,16 +122,15 @@ def main():
     reefPose3dTable = inst.getTable("reefPose3dTable")
     pose3dTableTopic = reefPose3dTable.getStructArrayTopic("pose", Pose3d)
     pose3dPublisher = pose3dTableTopic.publish()
+    reefPose3dToPublish = []
 
     coralCamera = CoralCamera.CoralCamera(cameraIndex=coralCameraIndex())
-    coralCameraOpened = coralCamera.camera.isOpened()
-    reefCameraConnectionPublisher.set(False)
+    reefCameraConnectionPublisher.set(coralCamera.camera.isOpened())
     
-    coralHitboxes = hitbox.makeCoralHitboxes()
+    coralHitboxes, pose3dReefValues = hitbox.makeCoralHitboxes()
     algaeHitboxes = hitbox.makeAlgaeHitboxes()
     
     while True:
-        # Get April Tags from the camera
         if keyboard.is_pressed("q"):
             inst.stopServer()
             cv2.destroyAllWindows()
@@ -144,19 +143,32 @@ def main():
                 robotPosition, timestamp = fetchRobotPosition()
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
                     robotPosition = robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
-                    
-                robotPosePublisher.set(robotPosition, timestamp)
 
-        if coralCamera.camera.isOpened() and robotPosition:
+                if robotPosition:
+                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+
+        # Only used for testing just coral
+        if not Constants.PhotonLibConstants.shouldTestAprilTags:
+            robotPosition = Pose3d(Translation3d(0,0,0), Rotation3d(0,0,0))
+            
+        if coralCamera.camera.isOpened() and robotPosition and (Constants.CoralAndAlgaeCameraConstants.shouldTestAlgae or Constants.CoralAndAlgaeCameraConstants.shouldTestCoral):
+
             reefCameraConnectionPublisher.set(True)
             reef = grab_past_reef(coralSubscribers)
-            coralCamera.camera_loop(reef, algae, coralHitboxes, algaeHitboxes, algaeNotSeenCounterList, robotPosition)
+            coralCamera.findCoralsOnReef(reef, algae, coralHitboxes, algaeHitboxes, algaeNotSeenCounterList, robotPosition)
             
             for level, publisher in enumerate(coralPublishers):
                 reefLevelBoolVals = []
                 for reefSection in reef:
                     reefLevelBoolVals.append(reefSection[level])
                 publisher.set(reefLevelBoolVals) 
+                
+            for reefSection in range(len(reef)):
+                for index in range(len(reefSection)):
+                    if reef[reefSection][index]:
+                        reefPose3dToPublish.append(pose3dReefValues[reefSection][index])
+                    
+            pose3dPublisher.set(reefPose3dToPublish)
                              
     time.sleep(0.01)
             
