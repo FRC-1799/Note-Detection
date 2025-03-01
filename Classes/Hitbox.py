@@ -59,9 +59,12 @@ class hitbox:
             Transform3d(Translation3d(-0.3, 0, 1.78), Rotation3d.fromDegrees(0, 90, 0))
         ]
 
+        pose3dList = [[None for _ in range(4)] for _ in range(12)] # for testing where it thinks coral is
         for i in range(12):
             for j in range(4):
-                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CoralAndAlgaeCameraConstants.radius)
+                transformedPose = blueStarts[i].transformBy(editTran[j])
+                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(transformedPose, CoralAndAlgaeCameraConstants.radius)
+                pose3dList[i][j] = transformedPose
             
         return blueHitboxes
     
@@ -84,141 +87,12 @@ class hitbox:
             Transform3d(Translation3d(0, 0, 1.3), Rotation3d.fromDegrees(0, 0, 0))
         ]
 
+        pose3dList = [[None for _ in range(4)] for _ in range(12)] # for testing where it thinks algae is
+
         for i in range(6):
             for j in range(2):
-                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(blueStarts[i].transformBy(editTran[j]), CoralAndAlgaeCameraConstants.radius)
+                transformedPose = blueStarts[i].transformBy(editTran[j])
+                blueHitboxes[i][j] = hitbox.hitboxFromPose3d(transformedPose, CoralAndAlgaeCameraConstants.radius)
+                pose3dList[i][j] = transformedPose
             
-        return blueHitboxes
-
-
-
-# class CreateHitbox:
-#     def __init__(self, team: str = "blue"):
-#         self.self = self
-#         self.team = team
-
-#     def coralHitboxMaker(self):
-
-
-
-
-
-        
-#         class ReefscapeReefBranch:
-#             """
-#             1 Branch of coral, facing a certain direction and at a certain height
-#             """
-#             def __init__(self, ideal_placement_position: Translation2d, facing_outwards: Rotation2d, height_meters: float, branch_inwards_direction_pitch_rad: float):
-#                 self.ideal_coral_placement_pose = Pose3d(
-#                     ideal_placement_position.x, ideal_placement_position.y, height_meters,
-#                     Rotation3d(degreesToRadians(0), -branch_inwards_direction_pitch_rad, facing_outwards.rotateBy(Rotation2d(math.radians(180))).radians())
-#                 )
-                
-#                 self.ideal_velocity_direction_pitch_to_score_rad = branch_inwards_direction_pitch_rad
-#                 self.has_coral = False
-
-#         class ReefscapeReefTrough:
-#             """
-#             L1, with its outward facing direction and position
-#             """
-#             def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
-#                 roll, pitch, yaw = degreesToRadians(0), degreesToRadians(0), outwards_facing.rotateBy(Rotation2d((math.radians(90)))).radians()
-#                 coral_rotation = Rotation3d(roll, pitch, yaw)
-#                 first_position = center_position, (Translation2d(0.6, outwards_facing))
-#                 second_position = center_position, (Translation2d(-0.04, outwards_facing))
-#                 self.first_placement_pose = Pose3d(first_position[0].X(), first_position[0].Y(), 0.48, coral_rotation)
-#                 self.second_placement_pose = Pose3d(second_position[0].X(), second_position[0].Y(), 0.52, coral_rotation)
-#                 self.ideal_coral_placement_pose = Translation3d(first_position[0].X(), first_position[0].Y(), 0.47)
-#                 self.coral_count = 0
-
-#         class ReefscapeReefBranchesTower:
-#             """
-#             Whole branch of coral, with the center position of the field and the direction it's facing
-#             """
-#             def __init__(self, stick_center_position_on_field: Translation2d, facing_outwards: Rotation2d):
-
-#                 # L1 trough, 15cm away from center
-#                 self.L1 = ReefscapeReefTrough(
-#                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
-#                     facing_outwards
-#                 )
-
-#                 # L2 stick, 20 cm away from center, 78cm above ground, 35 deg pitch
-#                 self.L2 = ReefscapeReefBranch(
-#                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.2, facing_outwards.radians())),
-#                     facing_outwards, 0.72, math.radians(-35)
-#                 )
-
-#                 # L3 stick, 20 cm away from center, 118cm above ground, 35 deg pitch
-#                 self.L3 = ReefscapeReefBranch(
-#                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.2, facing_outwards.radians())),
-#                     facing_outwards, 1.17, math.radians(-35)
-#                 )
-
-#                 # L4 stick, 30 cm away from center, 178cm above ground, vertical
-#                 self.L4 = ReefscapeReefBranch(
-#                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
-#                     facing_outwards, 1.78, math.radians(-90)
-#                 )
-
-            
-
-#         # Makes hitboxes out of the blue and branches and adds them to the list
-#         self.branchesList = []
-#         for i in range(12):
-#             branch = ReefscapeReefBranchesTower(self.branchesCenterPositionBlue[i], self.branchesFacingOutwardsBlue[i])
-#             self.branchesList.append(branch)
-#             branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             branchL3Hitbox = hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             branchL4Hitbox = hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             blueHitboxes[i].extend([branchL1Hitbox, branchL2Hitbox, branchL3Hitbox, branchL4Hitbox])
-            
-
-
-#         return blueHitboxes if self.team == "blue" else redHitboxes 
-    
-#     def algaeHitboxMaker(self):
-#         class L2Algae:
-#             def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
-#                 roll, pitch, yaw = degreesToRadians(0), degreesToRadians(0), outwards_facing.rotateBy(Rotation2d((math.radians(90)))).radians()
-#                 coral_rotation = Rotation3d(roll, pitch, yaw)
-#                 first_position = center_position, (Translation2d(0.6, outwards_facing))
-#                 self.first_placement_pose = Pose3d(first_position[0].X(), first_position[0].Y(), 0.81, coral_rotation)
-
-#         class L3Algae:
-#             def __init__(self, center_position: Translation2d, outwards_facing: Rotation2d):
-#                 roll, pitch, yaw = degreesToRadians(0), degreesToRadians(0), outwards_facing.rotateBy(Rotation2d((math.radians(90)))).radians()
-#                 coral_rotation = Rotation3d(roll, pitch, yaw)
-#                 first_position = center_position, (Translation2d(0.6, outwards_facing))
-#                 self.first_placement_pose = Pose3d(first_position[0].X(), first_position[0].Y(), 1.21, coral_rotation)
-
-#         class AlgaeTower:
-#             """
-#             The L2 and L3 algaes
-#             """
-#             def __init__(self, stick_center_position_on_field: Translation2d, facing_outwards: Rotation2d):
-
-#                 # L2 position
-#                 self.L2 = L2Algae(
-#                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
-#                     facing_outwards
-#                 )
-
-#                 # L3 position
-#                 self.L3 = L3Algae(
-#                     addTranslation2ds(stick_center_position_on_field, Translation2d(0.15, facing_outwards.radians())),
-#                     facing_outwards
-#                 )
-
-#        # for i in range(6):
-#             #for i in self.branchesCenterPositionBlue:
-#             #branch = AlgaeTower(self.branchesCenterPositionBlue[i], self.branchesFacingOutwardsBlue[i])
-#             #self.branchesList.append(branch)
-#             # branchL1Hitbox = hitbox.hitboxFromPose3d(branch.L1.first_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             # branchL2Hitbox = hitbox.hitboxFromPose3d(branch.L2.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             # branchL3Hitbox = hitbox.hitboxFromPose3d(branch.L3.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
-#             # branchL4Hitbox = hitbox.hitboxFromPose3d(branch.L4.ideal_coral_placement_pose, CoralAndAlgaeCameraConstants.radius)
-    
-#     def returnBranchesList(self):
-#         return self.branchesList
+        return blueHitboxes, pose3dList 

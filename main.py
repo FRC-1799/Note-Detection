@@ -127,8 +127,8 @@ def main():
     coralCameraOpened = coralCamera.camera.isOpened()
     reefCameraConnectionPublisher.set(False)
     
-    coralHitboxes = hitbox.makeCoralHitboxes()
-    algaeHitboxes = hitbox.makeAlgaeHitboxes()
+    coralHitboxes, pose3dReefValues = hitbox.makeCoralHitboxes()
+    algaeHitboxes, pose3dAlgaeValues = hitbox.makeAlgaeHitboxes()
     
     while True:
         # Get April Tags from the camera
