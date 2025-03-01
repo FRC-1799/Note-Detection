@@ -59,9 +59,7 @@ def main():
         
         if DriverStation.getAlliance() == DriverStation.Alliance.kRed:
             robotPosition=robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
-
-        if robotPosition:
-            robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
+            
         
         return robotPosition, timestamp
     
@@ -101,7 +99,7 @@ def main():
     
     # Start NT server
     inst = ntcore.NetworkTableInstance.getDefault()
-    inst.setServerTeam(1799)
+    #inst.setServerTeam(1799)
     if Constants.CoralAndAlgaeCameraConstants.robotReal:
         inst.startClient4("Vision")
     else:
