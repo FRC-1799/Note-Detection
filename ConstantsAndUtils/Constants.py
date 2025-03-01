@@ -3,8 +3,8 @@ import math
 
 class PhotonLibConstants:
     shouldTestAprilTags = True
-    APRIL_TAG_FRONT_CAMERA_NAME = "ArducamAprilTag0"
-    APRIL_TAG_BACK_CAMERA_NAME = "ArducamAprilTag1"
+    APRIL_TAG_FRONT_CAMERA_NAME = "AprilTag0"
+    APRIL_TAG_BACK_CAMERA_NAME = "AprilTag1"
     POSE_AMBIGUITY_TOLERANCE = 0.20
     REEF_WIDTH = 0.25
     REEF_HEIGHT = 0.25

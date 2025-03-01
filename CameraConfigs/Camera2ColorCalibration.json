@@ -1,0 +1,36 @@
+{
+    "camera": "Arducam OV9782 USB Camera (0c45:0002)",
+    "platform": "X11; Linux x86_64",
+    "camera_matrix": [
+        [
+            922.6186380047908,
+            0,
+            719.2122065562181
+        ],
+        [
+            0,
+            922.6860904798812,
+            346.7834282648909
+        ],
+        [
+            0,
+            0,
+            1
+        ]
+    ],
+    "distortion_coefficients": [
+        -0.015599723782036218,
+        0.18542664452376353,
+        0.00005837350986925785,
+        0.0021351745428269107,
+        -0.21371671274252646
+    ],
+    "distortion_model": "rectilinear",
+    "avg_reprojection_error": 0.7330940625261335,
+    "img_size": [
+        1280,
+        720
+    ],
+    "keyframes": 8,
+    "calibration_time": "Wed, 26 Feb 2025 16:21:30 GMT"
+}

@@ -127,10 +127,8 @@ def main():
                 if DriverStation.getAlliance == DriverStation.Alliance.kRed:
                     robotPosition = robotPosition.relativeTo(FieldMirroringUtils.FIELD_WIDTH, FieldMirroringUtils.FIELD_HEIGHT, 0, Rotation3d)
 
-                robotPosition = robotPosition.estimatedPose
                 if robotPosition:
-                    print(robotPosition)
-                    robotPosePublisher.set(robotPosition, int(timestamp))
+                    robotPosePublisher.set(robotPosition.estimatedPose, int(timestamp))
 
         ######## DELETE THIS #############
         # if not Constants.PhotonLibConstants.shouldTestAprilTags:
